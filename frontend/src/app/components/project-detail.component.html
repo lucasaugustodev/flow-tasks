@@ -1,0 +1,301 @@
+<div class="project-detail-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p class="body">Carregando detalhes do projeto...</p>
+  </div>
+
+  <!-- Project Details -->
+  <div *ngIf="!loading && project" class="project-detail-content">
+    <!-- Header -->
+    <div class="project-header">
+      <div class="header-top">
+        <button class="btn btn-secondary btn-small" (click)="goBack()">
+          <i class="icon-arrow-left"></i>
+          Voltar
+        </button>
+        
+        <div class="project-actions">
+          <button class="btn btn-secondary btn-small">
+            <i class="icon-edit"></i>
+            Editar
+          </button>
+          <button class="btn btn-secondary btn-small">
+            <i class="icon-settings"></i>
+            Configurações
+          </button>
+        </div>
+      </div>
+
+      <div class="project-info">
+        <div class="project-main-info">
+          <h1 class="project-title">{{ project.name }}</h1>
+          <p class="project-description">{{ project.description }}</p>
+          
+          <div class="project-meta">
+            <div class="meta-item">
+              <span class="meta-label">Status:</span>
+              <span 
+                class="status-badge"
+                [style.background-color]="getStatusColor(project.status)"
+              >
+                {{ getStatusLabel(project.status) }}
+              </span>
+            </div>
+            
+            <div class="meta-item" *ngIf="project.startDate">
+              <span class="meta-label">Início:</span>
+              <span class="meta-value">{{ formatDate(project.startDate) }}</span>
+            </div>
+            
+            <div class="meta-item" *ngIf="project.endDate">
+              <span class="meta-label">Término:</span>
+              <span class="meta-value">{{ formatDate(project.endDate) }}</span>
+            </div>
+            
+            <div class="meta-item">
+              <span class="meta-label">Duração:</span>
+              <span class="meta-value">{{ getProjectDuration() }}</span>
+            </div>
+            
+            <div class="meta-item">
+              <span class="meta-label">Criado por:</span>
+              <span class="meta-value">{{ project.createdBy.fullName }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project Stats -->
+        <div class="project-stats">
+          <div class="stat-card">
+            <div class="stat-number">{{ taskStats.total }}</div>
+            <div class="stat-label">Total de Tarefas</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-number">{{ taskStats.completed }}</div>
+            <div class="stat-label">Concluídas</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-number">{{ taskStats.inProgress }}</div>
+            <div class="stat-label">Em Progresso</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-number">{{ getCompletionPercentage() }}%</div>
+            <div class="stat-label">Progresso</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="progress-section">
+        <div class="progress-info">
+          <span class="progress-text">
+            Progresso do Projeto: {{ taskStats.completed }} de {{ taskStats.total }} tarefas concluídas
+          </span>
+          <span class="progress-percentage">{{ getCompletionPercentage() }}%</span>
+        </div>
+        <div class="progress-bar">
+          <div 
+            class="progress-fill"
+            [style.width.%]="getCompletionPercentage()"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs-container">
+      <div class="tabs-header">
+        <button 
+          class="tab-button"
+          [class.active]="activeTab === 'tasks'"
+          (click)="setActiveTab('tasks')"
+        >
+          <i class="icon-tasks"></i>
+          Tarefas
+          <span class="tab-count">{{ taskStats.total }}</span>
+        </button>
+        
+        <button 
+          class="tab-button"
+          [class.active]="activeTab === 'access'"
+          (click)="setActiveTab('access')"
+        >
+          <i class="icon-users"></i>
+          Acessos
+          <span class="tab-count">{{ getProjectAccessUsers().length }}</span>
+        </button>
+        
+        <button 
+          class="tab-button"
+          [class.active]="activeTab === 'meetings'"
+          (click)="setActiveTab('meetings')"
+        >
+          <i class="icon-calendar"></i>
+          Atas de Reunião
+          <span class="tab-count">{{ meetingMinutes.length }}</span>
+        </button>
+      </div>
+
+      <!-- Tasks Tab -->
+      <div *ngIf="activeTab === 'tasks'" class="tab-content">
+        <div class="tasks-section">
+          <div class="section-header">
+            <h3 class="h3">Tarefas do Projeto</h3>
+            <button class="btn btn-primary btn-small">
+              <i class="icon-plus"></i>
+              Nova Tarefa
+            </button>
+          </div>
+
+          <div *ngIf="projectTasks.length === 0" class="empty-state">
+            <i class="icon-tasks empty-icon"></i>
+            <h4 class="h3">Nenhuma tarefa encontrada</h4>
+            <p class="body text-secondary">Este projeto ainda não possui tarefas.</p>
+            <button class="btn btn-primary">
+              <i class="icon-plus"></i>
+              Criar Primeira Tarefa
+            </button>
+          </div>
+
+          <div class="tasks-grid" *ngIf="projectTasks.length > 0">
+            <div 
+              *ngFor="let task of projectTasks" 
+              class="task-card card card-interactive"
+              [style.border-left]="'4px solid ' + getPriorityColor(task.priority)"
+            >
+              <div class="task-header">
+                <h4 class="task-title">{{ task.title }}</h4>
+                <span 
+                  class="priority-badge"
+                  [style.background-color]="getPriorityColor(task.priority)"
+                >
+                  {{ getPriorityLabel(task.priority) }}
+                </span>
+              </div>
+
+              <p *ngIf="task.description" class="task-description">
+                {{ task.description }}
+              </p>
+
+              <div class="task-footer">
+                <div class="task-meta">
+                  <span class="status-badge">{{ getTaskStatusLabel(task.status) }}</span>
+                  <span *ngIf="task.assignedUser" class="assigned-user">
+                    {{ task.assignedUser.fullName }}
+                  </span>
+                </div>
+                
+                <div class="task-dates">
+                  <span *ngIf="task.dueDate" class="due-date caption">
+                    Vence: {{ formatDate(task.dueDate) }}
+                  </span>
+                  <span class="created-date caption">
+                    Criado: {{ formatDate(task.createdAt) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Access Tab -->
+      <div *ngIf="activeTab === 'access'" class="tab-content">
+        <div class="access-section">
+          <div class="section-header">
+            <h3 class="h3">Usuários com Acesso</h3>
+            <button class="btn btn-primary btn-small">
+              <i class="icon-plus"></i>
+              Adicionar Usuário
+            </button>
+          </div>
+
+          <div class="users-grid">
+            <div 
+              *ngFor="let user of getProjectAccessUsers()" 
+              class="user-card card"
+            >
+              <div class="user-avatar">
+                <i class="icon-user"></i>
+              </div>
+              
+              <div class="user-info">
+                <h4 class="user-name">{{ user.fullName }}</h4>
+                <p class="user-email caption">{{ user.email }}</p>
+                <p class="user-username caption">@{{ user.username }}</p>
+              </div>
+              
+              <div class="user-role">
+                <span class="role-badge">
+                  {{ user.id === project?.createdBy?.id ? 'Proprietário' : 'Colaborador' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Meetings Tab -->
+      <div *ngIf="activeTab === 'meetings'" class="tab-content">
+        <div class="meetings-section">
+          <div class="section-header">
+            <h3 class="h3">Atas de Reunião</h3>
+            <button class="btn btn-primary btn-small">
+              <i class="icon-plus"></i>
+              Nova Ata
+            </button>
+          </div>
+
+          <div class="meetings-list">
+            <div 
+              *ngFor="let meeting of meetingMinutes" 
+              class="meeting-card card"
+            >
+              <div class="meeting-header">
+                <h4 class="meeting-title">{{ meeting.title }}</h4>
+                <span class="meeting-date">{{ formatDate(meeting.date) }}</span>
+              </div>
+
+              <div class="meeting-participants">
+                <strong>Participantes:</strong>
+                <span class="participants-list">{{ meeting.participants.join(', ') }}</span>
+              </div>
+
+              <div class="meeting-summary">
+                <p>{{ meeting.summary }}</p>
+              </div>
+
+              <div class="meeting-decisions" *ngIf="meeting.decisions.length > 0">
+                <strong>Decisões:</strong>
+                <ul>
+                  <li *ngFor="let decision of meeting.decisions">{{ decision }}</li>
+                </ul>
+              </div>
+
+              <div class="meeting-actions" *ngIf="meeting.nextActions.length > 0">
+                <strong>Próximas Ações:</strong>
+                <ul>
+                  <li *ngFor="let action of meeting.nextActions">{{ action }}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="!loading && !project" class="error-state">
+    <i class="icon-alert empty-icon"></i>
+    <h3 class="h3">Projeto não encontrado</h3>
+    <p class="body text-secondary">O projeto solicitado não existe ou você não tem acesso a ele.</p>
+    <button class="btn btn-primary" (click)="goBack()">
+      Voltar para Projetos
+    </button>
+  </div>
+</div>

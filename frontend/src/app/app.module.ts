@@ -11,6 +11,7 @@ import { AppComponent } from './app.component';
 import { LoginComponent } from './components/login.component';
 import { DashboardComponent } from './components/dashboard.component';
 import { ProjectsComponent } from './components/projects.component';
+import { ProjectDetailComponent } from './components/project-detail.component';
 import { HeaderComponent } from './components/header.component';
 import { KanbanBoardComponent } from './components/kanban-board.component';
 import { TaskDetailModalComponent } from './components/task-detail-modal.component';
@@ -21,6 +22,7 @@ import { TaskDetailModalComponent } from './components/task-detail-modal.compone
     LoginComponent,
     DashboardComponent,
     ProjectsComponent,
+    ProjectDetailComponent,
     HeaderComponent,
     KanbanBoardComponent,
     TaskDetailModalComponent

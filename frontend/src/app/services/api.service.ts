@@ -88,6 +88,7 @@ export class ApiService {
   }
 
   getCurrentUser(): Observable<User> {
+    console.log('Getting current user from API');
     return this.http.get<User>(`${this.baseUrl}/users/me`);
   }
 
@@ -100,8 +101,18 @@ export class ApiService {
     return this.http.get<Project>(`${this.baseUrl}/projects/${id}`);
   }
 
-  createProject(project: Partial<Project>): Observable<Project> {
-    return this.http.post<Project>(`${this.baseUrl}/projects`, project);
+  createProject(projectRequest: any): Observable<Project> {
+    // Convert dates to proper format for backend
+    const projectData = {
+      name: projectRequest.name,
+      description: projectRequest.description || '',
+      status: projectRequest.status || 'ACTIVE',
+      startDate: projectRequest.startDate ? new Date(projectRequest.startDate + 'T00:00:00').toISOString() : null,
+      endDate: projectRequest.endDate ? new Date(projectRequest.endDate + 'T23:59:59').toISOString() : null
+    };
+
+    console.log('Sending project data to backend:', projectData);
+    return this.http.post<Project>(`${this.baseUrl}/projects`, projectData);
   }
 
   // Tasks

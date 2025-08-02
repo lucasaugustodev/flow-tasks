@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { ApiService } from '../services/api.service';
 import { Project, ProjectStatus } from '../models/task.model';
@@ -38,7 +39,10 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     { value: ProjectStatus.CANCELLED, label: 'Cancelado' }
   ];
 
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.loadProjects();
@@ -99,10 +103,11 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     this.newProject = {
       name: '',
       description: '',
-      status: ProjectStatus.PLANNING,
+      status: ProjectStatus.ACTIVE, // Changed to ACTIVE as default
       startDate: '',
       endDate: ''
     };
+    console.log('Opened create modal with initial data:', this.newProject);
     this.isCreateModalOpen = true;
   }
 
@@ -115,23 +120,45 @@ export class ProjectsComponent implements OnInit, OnDestroy {
       return;
     }
 
+    console.log('Creating project with data:', this.newProject);
+
     this.apiService.createProject(this.newProject)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (project) => {
+          console.log('Project created successfully:', project);
           this.projects.push(project);
           this.applyFilters();
           this.closeCreateModal();
         },
         error: (error) => {
           console.error('Error creating project:', error);
+          console.error('Error details:', {
+            status: error.status,
+            message: error.message,
+            error: error.error
+          });
+
+          let errorMessage = 'Erro desconhecido';
+          if (error.status === 400) {
+            errorMessage = 'Dados inválidos. Verifique se todos os campos obrigatórios estão preenchidos corretamente.';
+          } else if (error.status === 403) {
+            errorMessage = 'Você não tem permissão para criar projetos.';
+          } else if (error.status === 401) {
+            errorMessage = 'Sessão expirada. Faça login novamente.';
+          } else if (error.error?.message) {
+            errorMessage = error.error.message;
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+
+          alert('Erro ao criar projeto: ' + errorMessage);
         }
       });
   }
 
   openProjectDetail(project: Project): void {
-    this.selectedProject = project;
-    this.isDetailModalOpen = true;
+    this.router.navigate(['/projects', project.id]);
   }
 
   closeProjectDetail(): void {
@@ -140,8 +167,18 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   }
 
   isCreateFormValid(): boolean {
-    return this.newProject.name.trim().length > 0 && 
-           this.newProject.description.trim().length > 0;
+    const isValid = this.newProject.name.trim().length > 0 &&
+                   this.newProject.description.trim().length > 0;
+
+    console.log('Project form validation:', {
+      name: this.newProject.name,
+      nameValid: this.newProject.name.trim().length > 0,
+      description: this.newProject.description,
+      descriptionValid: this.newProject.description.trim().length > 0,
+      overallValid: isValid
+    });
+
+    return isValid;
   }
 
   getStatusColor(status: ProjectStatus): string {
