@@ -86,7 +86,8 @@ export class KanbanBoardComponent implements OnInit, OnDestroy {
 
   loadData(): void {
     this.loading = true;
-    
+    console.log('Loading kanban data...');
+
     forkJoin({
       tasks: this.apiService.getTasks(),
       users: this.apiService.getUsers(),
@@ -95,6 +96,11 @@ export class KanbanBoardComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe({
       next: ({ tasks, users, projects }) => {
+        console.log('Data loaded successfully:', {
+          tasksCount: tasks.length,
+          usersCount: users.length,
+          projectsCount: projects.length
+        });
         this.users = users;
         this.projects = projects;
         this.organizeTasks(tasks);
@@ -103,6 +109,7 @@ export class KanbanBoardComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error loading data:', error);
         this.loading = false;
+        alert('Erro ao carregar dados: ' + (error.error?.message || error.message || 'Erro desconhecido'));
       }
     });
   }
@@ -170,12 +177,25 @@ export class KanbanBoardComponent implements OnInit, OnDestroy {
   }
 
   openCreateTaskModal(): void {
+    console.log('Opening create task modal');
+
+    // Check if there are projects available
+    if (this.projects.length === 0) {
+      alert('Nenhum projeto disponível. Crie um projeto primeiro.');
+      return;
+    }
+
     this.newTask = {
       title: '',
       description: '',
       priority: TaskPriority.MEDIUM,
-      project: { id: 0 }
+      project: { id: 0 },
+      dueDate: '',
+      assignedUserId: undefined
     };
+    console.log('Reset form data:', this.newTask);
+    console.log('Available projects:', this.projects);
+    console.log('Available users:', this.users);
     this.isCreateTaskModalOpen = true;
   }
 
@@ -184,14 +204,34 @@ export class KanbanBoardComponent implements OnInit, OnDestroy {
   }
 
   createTask(): void {
+    console.log('Creating task with data:', this.newTask);
+
     if (!this.isCreateTaskFormValid()) {
+      console.error('Form validation failed:', {
+        title: this.newTask.title,
+        projectId: this.newTask.project.id,
+        isValid: this.isCreateTaskFormValid()
+      });
       return;
     }
 
-    this.apiService.createTask(this.newTask)
+    // Ensure the task has all required fields
+    const taskData: CreateTaskRequest = {
+      title: this.newTask.title.trim(),
+      description: this.newTask.description?.trim() || '',
+      priority: this.newTask.priority,
+      project: { id: Number(this.newTask.project.id) },
+      dueDate: this.newTask.dueDate && this.newTask.dueDate.trim() ? this.newTask.dueDate : undefined,
+      assignedUserId: this.newTask.assignedUserId && this.newTask.assignedUserId > 0 ? this.newTask.assignedUserId : undefined
+    };
+
+    console.log('Sending task data to API:', taskData);
+
+    this.apiService.createTask(taskData)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (task) => {
+          console.log('Task created successfully:', task);
           // Add task to backlog column
           const backlogColumn = this.columns.find(col => col.id === TaskStatus.BACKLOG);
           if (backlogColumn) {
@@ -201,6 +241,26 @@ export class KanbanBoardComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error creating task:', error);
+          console.error('Error details:', {
+            status: error.status,
+            message: error.message,
+            error: error.error
+          });
+
+          let errorMessage = 'Erro desconhecido';
+          if (error.status === 403) {
+            errorMessage = 'Você não tem permissão para criar tarefas neste projeto';
+          } else if (error.status === 400) {
+            errorMessage = 'Dados inválidos. Verifique se todos os campos obrigatórios estão preenchidos';
+          } else if (error.status === 401) {
+            errorMessage = 'Sessão expirada. Faça login novamente';
+          } else if (error.error?.message) {
+            errorMessage = error.error.message;
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+
+          alert('Erro ao criar tarefa: ' + errorMessage);
         }
       });
   }
@@ -248,6 +308,21 @@ export class KanbanBoardComponent implements OnInit, OnDestroy {
   }
 
   isCreateTaskFormValid(): boolean {
-    return this.newTask.title.trim().length > 0 && this.newTask.project.id > 0;
+    const isValid = this.newTask.title.trim().length > 0 &&
+                   this.newTask.project.id > 0 &&
+                   this.newTask.priority !== null &&
+                   this.newTask.priority !== undefined;
+
+    console.log('Form validation:', {
+      title: this.newTask.title,
+      titleValid: this.newTask.title.trim().length > 0,
+      projectId: this.newTask.project.id,
+      projectValid: this.newTask.project.id > 0,
+      priority: this.newTask.priority,
+      priorityValid: this.newTask.priority !== null && this.newTask.priority !== undefined,
+      overallValid: isValid
+    });
+
+    return isValid;
   }
 }

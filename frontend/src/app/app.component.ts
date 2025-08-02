@@ -59,13 +59,17 @@ export class AppComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (user) => {
-          // User loaded successfully
+          console.log('User loaded successfully:', user);
         },
         error: (error) => {
           console.error('Error loading user:', error);
-          // If token is invalid, logout
-          this.apiService.logout();
-          this.router.navigate(['/login']);
+          // Only logout if it's a 401 error (token invalid)
+          // Other errors might be temporary network issues
+          if (error.status === 401) {
+            console.log('Token invalid - logging out');
+            this.apiService.logout();
+            this.router.navigate(['/login']);
+          }
         }
       });
   }

@@ -64,9 +64,13 @@ export class LoginComponent implements OnInit {
     this.loading = true;
     this.error = '';
 
+    console.log('Attempting login with:', this.loginForm.username);
+
     this.apiService.login(this.loginForm).subscribe({
       next: (response) => {
+        console.log('Login successful:', response);
         this.apiService.setToken(response.accessToken);
+        this.loading = false;
         this.router.navigate(['/dashboard']);
       },
       error: (error) => {

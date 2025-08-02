@@ -113,14 +113,14 @@
       <div class="form-row">
         <div class="form-group">
           <label for="taskProject" class="form-label">Projeto</label>
-          <select 
+          <select
             id="taskProject"
-            class="input" 
+            class="input"
             [(ngModel)]="newTask.project.id"
             name="projectId"
             required
           >
-            <option value="0">Selecione um projeto</option>
+            <option value="0" disabled>Selecione um projeto</option>
             <option *ngFor="let project of projects" [value]="project.id">
               {{ project.name }}
             </option>
@@ -145,13 +145,13 @@
 
       <div class="form-group">
         <label for="taskAssignee" class="form-label">Atribuir para</label>
-        <select 
+        <select
           id="taskAssignee"
-          class="input" 
+          class="input"
           [(ngModel)]="newTask.assignedUserId"
           name="assignedUserId"
         >
-          <option [value]="undefined">Não atribuído</option>
+          <option [value]="null">Não atribuído</option>
           <option *ngFor="let user of users" [value]="user.id">
             {{ user.fullName }}
           </option>
