@@ -1,0 +1,159 @@
+<div class="login-container">
+  <div class="login-card card">
+    <!-- Header -->
+    <div class="login-header">
+      <h1 class="h1">Project Management</h1>
+      <p class="caption text-secondary">Sistema de Gerenciamento de Projetos</p>
+    </div>
+
+    <!-- Toggle Buttons -->
+    <div class="mode-toggle">
+      <button 
+        class="toggle-btn"
+        [class.active]="isLoginMode"
+        (click)="isLoginMode = true; error = ''"
+      >
+        Login
+      </button>
+      <button 
+        class="toggle-btn"
+        [class.active]="!isLoginMode"
+        (click)="isLoginMode = false; error = ''"
+      >
+        Registro
+      </button>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="error" class="error-message">
+      <i class="icon-x"></i>
+      {{ error }}
+    </div>
+
+    <!-- Login Form -->
+    <form *ngIf="isLoginMode" (ngSubmit)="onLogin()" class="auth-form">
+      <div class="form-group">
+        <label for="loginUsername" class="form-label">Usuário</label>
+        <input 
+          id="loginUsername"
+          type="text" 
+          class="input" 
+          [(ngModel)]="loginForm.username"
+          name="username"
+          placeholder="Digite seu usuário"
+          required
+          autocomplete="username"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="loginPassword" class="form-label">Senha</label>
+        <input 
+          id="loginPassword"
+          type="password" 
+          class="input" 
+          [(ngModel)]="loginForm.password"
+          name="password"
+          placeholder="Digite sua senha"
+          required
+          autocomplete="current-password"
+        >
+      </div>
+
+      <button 
+        type="submit" 
+        class="btn btn-primary w-full"
+        [disabled]="!isLoginFormValid() || loading"
+      >
+        <span *ngIf="loading" class="loading-spinner-small"></span>
+        <span *ngIf="!loading">Entrar</span>
+        <span *ngIf="loading">Entrando...</span>
+      </button>
+    </form>
+
+    <!-- Register Form -->
+    <form *ngIf="!isLoginMode" (ngSubmit)="onRegister()" class="auth-form">
+      <div class="form-group">
+        <label for="registerFullName" class="form-label">Nome Completo</label>
+        <input 
+          id="registerFullName"
+          type="text" 
+          class="input" 
+          [(ngModel)]="registerForm.fullName"
+          name="fullName"
+          placeholder="Digite seu nome completo"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="registerUsername" class="form-label">Usuário</label>
+        <input 
+          id="registerUsername"
+          type="text" 
+          class="input" 
+          [(ngModel)]="registerForm.username"
+          name="username"
+          placeholder="Escolha um nome de usuário"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="registerEmail" class="form-label">Email</label>
+        <input 
+          id="registerEmail"
+          type="email" 
+          class="input" 
+          [(ngModel)]="registerForm.email"
+          name="email"
+          placeholder="Digite seu email"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="registerPassword" class="form-label">Senha</label>
+        <input 
+          id="registerPassword"
+          type="password" 
+          class="input" 
+          [(ngModel)]="registerForm.password"
+          name="password"
+          placeholder="Escolha uma senha"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword" class="form-label">Confirmar Senha</label>
+        <input 
+          id="confirmPassword"
+          type="password" 
+          class="input" 
+          [(ngModel)]="registerForm.confirmPassword"
+          name="confirmPassword"
+          placeholder="Confirme sua senha"
+          required
+        >
+      </div>
+
+      <button 
+        type="submit" 
+        class="btn btn-primary w-full"
+        [disabled]="!isRegisterFormValidForSubmit() || loading"
+      >
+        <span *ngIf="loading" class="loading-spinner-small"></span>
+        <span *ngIf="!loading">Criar Conta</span>
+        <span *ngIf="loading">Criando...</span>
+      </button>
+    </form>
+
+    <!-- Demo Credentials -->
+    <div class="demo-info">
+      <p class="caption text-secondary">Credenciais de demonstração:</p>
+      <p class="caption"><strong>Usuário:</strong> admin</p>
+      <p class="caption"><strong>Senha:</strong> password123</p>
+    </div>
+  </div>
+</div>

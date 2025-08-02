@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban - Sistema de Gerenciamento de Projetos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .kanban-column {
+            min-height: 500px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .task-card {
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .task-card:hover {
+            transform: translateY(-2px);
+        }
+        .priority-high { border-left: 4px solid #dc3545; }
+        .priority-medium { border-left: 4px solid #ffc107; }
+        .priority-low { border-left: 4px solid #28a745; }
+        .priority-urgent { border-left: 4px solid #6f42c1; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-project-diagram"></i> Gerenciamento de Projetos
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/projects">Projetos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/kanban">Kanban</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user"></i> <span th:text="${user.username}">Usuário</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/logout">Sair</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Header -->
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1><i class="fas fa-tasks"></i> Minhas Tarefas - Kanban</h1>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTaskModal">
+                        <i class="fas fa-plus"></i> Nova Tarefa
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kanban Board -->
+        <div class="row">
+            <!-- Backlog -->
+            <div class="col-md-2">
+                <div class="kanban-column">
+                    <h5 class="text-center mb-3">
+                        <i class="fas fa-inbox"></i> Backlog
+                        <span class="badge bg-secondary ms-2" th:text="${#lists.size(tasks.?[status.name() == 'BACKLOG'])}">0</span>
+                    </h5>
+                    <div th:each="task : ${tasks.?[status.name() == 'BACKLOG']}">
+                        <div class="card task-card" th:classappend="'priority-' + ${task.priority.name().toLowerCase()}"
+                             th:data-task-id="${task.id}" style="cursor: pointer;">
+                            <div class="card-body p-3">
+                                <h6 class="card-title" th:text="${task.title}">Título da Tarefa</h6>
+                                <p class="card-text small text-muted" th:text="${task.project.name}">Projeto</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-info" th:text="${task.priority}">Prioridade</span>
+                                    <small class="text-muted" th:if="${task.assignedUser}" th:text="${task.assignedUser.fullName}">Responsável</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ready to Develop -->
+            <div class="col-md-2">
+                <div class="kanban-column">
+                    <h5 class="text-center mb-3">
+                        <i class="fas fa-play"></i> Pronto
+                        <span class="badge bg-secondary ms-2" th:text="${#lists.size(tasks.?[status.name() == 'READY_TO_DEVELOP'])}">0</span>
+                    </h5>
+                    <div th:each="task : ${tasks.?[status.name() == 'READY_TO_DEVELOP']}">
+                        <div class="card task-card" th:classappend="'priority-' + ${task.priority.name().toLowerCase()}"
+                             th:data-task-id="${task.id}" style="cursor: pointer;">
+                            <div class="card-body p-3">
+                                <h6 class="card-title" th:text="${task.title}">Título da Tarefa</h6>
+                                <p class="card-text small text-muted" th:text="${task.project.name}">Projeto</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-info" th:text="${task.priority}">Prioridade</span>
+                                    <small class="text-muted" th:if="${task.assignedUser}" th:text="${task.assignedUser.fullName}">Responsável</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- In Progress -->
+            <div class="col-md-2">
+                <div class="kanban-column">
+                    <h5 class="text-center mb-3">
+                        <i class="fas fa-spinner"></i> Em Progresso
+                        <span class="badge bg-secondary ms-2" th:text="${#lists.size(tasks.?[status.name() == 'IN_PROGRESS'])}">0</span>
+                    </h5>
+                    <div th:each="task : ${tasks.?[status.name() == 'IN_PROGRESS']}">
+                        <div class="card task-card" th:classappend="'priority-' + ${task.priority.name().toLowerCase()}"
+                             th:data-task-id="${task.id}" style="cursor: pointer;">
+                            <div class="card-body p-3">
+                                <h6 class="card-title" th:text="${task.title}">Título da Tarefa</h6>
+                                <p class="card-text small text-muted" th:text="${task.project.name}">Projeto</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-info" th:text="${task.priority}">Prioridade</span>
+                                    <small class="text-muted" th:if="${task.assignedUser}" th:text="${task.assignedUser.fullName}">Responsável</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- In Review -->
+            <div class="col-md-2">
+                <div class="kanban-column">
+                    <h5 class="text-center mb-3">
+                        <i class="fas fa-eye"></i> Em Revisão
+                        <span class="badge bg-secondary ms-2" th:text="${#lists.size(tasks.?[status.name() == 'IN_REVIEW'])}">0</span>
+                    </h5>
+                    <div th:each="task : ${tasks.?[status.name() == 'IN_REVIEW']}">
+                        <div class="card task-card" th:classappend="'priority-' + ${task.priority.name().toLowerCase()}"
+                             th:data-task-id="${task.id}" style="cursor: pointer;">
+                            <div class="card-body p-3">
+                                <h6 class="card-title" th:text="${task.title}">Título da Tarefa</h6>
+                                <p class="card-text small text-muted" th:text="${task.project.name}">Projeto</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-info" th:text="${task.priority}">Prioridade</span>
+                                    <small class="text-muted" th:if="${task.assignedUser}" th:text="${task.assignedUser.fullName}">Responsável</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Done -->
+            <div class="col-md-2">
+                <div class="kanban-column">
+                    <h5 class="text-center mb-3">
+                        <i class="fas fa-check"></i> Concluído
+                        <span class="badge bg-secondary ms-2" th:text="${#lists.size(tasks.?[status.name() == 'DONE'])}">0</span>
+                    </h5>
+                    <div th:each="task : ${tasks.?[status.name() == 'DONE']}">
+                        <div class="card task-card" th:classappend="'priority-' + ${task.priority.name().toLowerCase()}"
+                             th:data-task-id="${task.id}" style="cursor: pointer;">
+                            <div class="card-body p-3">
+                                <h6 class="card-title" th:text="${task.title}">Título da Tarefa</h6>
+                                <p class="card-text small text-muted" th:text="${task.project.name}">Projeto</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-success">Concluído</span>
+                                    <small class="text-muted" th:if="${task.assignedUser}" th:text="${task.assignedUser.fullName}">Responsável</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div th:if="${#lists.isEmpty(tasks)}" class="row">
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-tasks fa-5x text-muted mb-3"></i>
+                    <h3 class="text-muted">Nenhuma tarefa encontrada</h3>
+                    <p class="text-muted">Você não tem tarefas atribuídas no momento.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Task Modal -->
+    <div class="modal fade" id="createTaskModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nova Tarefa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="createTaskForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="taskProject" class="form-label">Projeto</label>
+                            <select class="form-select" id="taskProject" name="projectId" required>
+                                <option value="">Selecione um projeto...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskTitle" class="form-label">Título da Tarefa</label>
+                            <input type="text" class="form-control" id="taskTitle" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskDescription" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="taskDescription" name="description" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskAssignedUser" class="form-label">Atribuir para</label>
+                            <select class="form-select" id="taskAssignedUser" name="assignedUserId">
+                                <option value="">Não atribuído</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="taskPriority" class="form-label">Prioridade</label>
+                                    <select class="form-select" id="taskPriority" name="priority">
+                                        <option value="LOW">Baixa</option>
+                                        <option value="MEDIUM" selected>Média</option>
+                                        <option value="HIGH">Alta</option>
+                                        <option value="URGENT">Urgente</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="taskDueDate" class="form-label">Data de Vencimento</label>
+                                    <input type="date" class="form-control" id="taskDueDate" name="dueDate">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Criar Tarefa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Details Modal -->
+    <div class="modal fade" id="taskDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="taskDetailsTitle">Detalhes da Tarefa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Task Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6>Informações da Tarefa</h6>
+                            <p><strong>Projeto:</strong> <span id="taskDetailsProject">-</span></p>
+                            <p><strong>Status:</strong> <span id="taskDetailsStatus">-</span></p>
+                            <p><strong>Prioridade:</strong> <span id="taskDetailsPriority">-</span></p>
+                            <p><strong>Atribuído para:</strong> <span id="taskDetailsAssigned">-</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Datas</h6>
+                            <p><strong>Criado em:</strong> <span id="taskDetailsCreatedAt">-</span></p>
+                            <p><strong>Criado por:</strong> <span id="taskDetailsCreatedBy">-</span></p>
+                            <p><strong>Vencimento:</strong> <span id="taskDetailsDueDate">-</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <h6>Descrição</h6>
+                        <p id="taskDetailsDescription" class="text-muted">-</p>
+                    </div>
+
+                    <!-- Tabs -->
+                    <ul class="nav nav-tabs" id="taskDetailsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments" type="button" role="tab">
+                                <i class="fas fa-comments"></i> Comentários
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="checklist-tab" data-bs-toggle="tab" data-bs-target="#checklist" type="button" role="tab">
+                                <i class="fas fa-check-square"></i> Checklist
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content mt-3" id="taskDetailsTabsContent">
+                        <!-- Comments Tab -->
+                        <div class="tab-pane fade show active" id="comments" role="tabpanel">
+                            <div class="mb-3">
+                                <div class="input-group">
+                                    <textarea class="form-control" id="newCommentText" rows="2" placeholder="Adicionar comentário..."></textarea>
+                                    <button class="btn btn-primary" type="button" onclick="addComment()">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="taskComments">
+                                <!-- Comments will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- Checklist Tab -->
+                        <div class="tab-pane fade" id="checklist" role="tabpanel">
+                            <div class="mb-3">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="newChecklistItem" placeholder="Adicionar item ao checklist...">
+                                    <button class="btn btn-primary" type="button" onclick="addChecklistItem()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="taskChecklist">
+                                <!-- Checklist items will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary">Editar Tarefa</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Add click event listeners to task cards
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add event listeners to all task cards
+            document.addEventListener('click', function(e) {
+                const taskCard = e.target.closest('.task-card[data-task-id]');
+                if (taskCard) {
+                    const taskId = taskCard.getAttribute('data-task-id');
+                    openTaskModal(taskId);
+                }
+            });
+        });
+        // Load projects and users when modal opens
+        document.getElementById('createTaskModal').addEventListener('show.bs.modal', async function() {
+            try {
+                const token = localStorage.getItem('token');
+
+                // Load projects
+                const projectsResponse = await fetch('/api/projects', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+
+                if (projectsResponse.ok) {
+                    const projects = await projectsResponse.json();
+                    const projectSelect = document.getElementById('taskProject');
+                    projectSelect.innerHTML = '<option value="">Selecione um projeto...</option>';
+
+                    projects.forEach(project => {
+                        const option = document.createElement('option');
+                        option.value = project.id;
+                        option.textContent = project.name;
+                        projectSelect.appendChild(option);
+                    });
+                }
+
+                // Load users
+                const usersResponse = await fetch('/api/users', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+
+                if (usersResponse.ok) {
+                    const users = await usersResponse.json();
+                    const userSelect = document.getElementById('taskAssignedUser');
+                    userSelect.innerHTML = '<option value="">Não atribuído</option>';
+
+                    users.forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.id;
+                        option.textContent = user.fullName;
+                        userSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('createTaskForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const taskData = {
+                title: formData.get('title'),
+                description: formData.get('description'),
+                priority: formData.get('priority'),
+                dueDate: formData.get('dueDate') ? formData.get('dueDate') + 'T23:59:59' : null,
+                project: { id: parseInt(formData.get('projectId')) },
+                assignedUserId: formData.get('assignedUserId') ? parseInt(formData.get('assignedUserId')) : null
+            };
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/tasks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(taskData)
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Erro ao criar tarefa');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Erro de conexão');
+            }
+        });
+
+        // Function to open task modal
+        async function openTaskModal(taskId) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/tasks/${taskId}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+
+                if (response.ok) {
+                    const task = await response.json();
+                    showTaskDetailsModal(task);
+                } else {
+                    alert('Erro ao carregar detalhes da tarefa');
+                }
+            } catch (error) {
+                console.error('Error loading task details:', error);
+                alert('Erro de conexão');
+            }
+        }
+
+        function showTaskDetailsModal(task) {
+            // Update modal content
+            document.getElementById('taskDetailsTitle').textContent = task.title;
+            document.getElementById('taskDetailsDescription').textContent = task.description || 'Sem descrição';
+            document.getElementById('taskDetailsProject').textContent = task.project.name;
+            document.getElementById('taskDetailsStatus').textContent = task.status;
+            document.getElementById('taskDetailsPriority').textContent = task.priority;
+            document.getElementById('taskDetailsAssigned').textContent = task.assignedUser ? task.assignedUser.fullName : 'Não atribuído';
+            document.getElementById('taskDetailsCreatedBy').textContent = task.createdBy.fullName;
+            document.getElementById('taskDetailsCreatedAt').textContent = new Date(task.createdAt).toLocaleString('pt-BR');
+
+            if (task.dueDate) {
+                document.getElementById('taskDetailsDueDate').textContent = new Date(task.dueDate).toLocaleDateString('pt-BR');
+            } else {
+                document.getElementById('taskDetailsDueDate').textContent = 'Não definido';
+            }
+
+            // Store task ID for actions
+            document.getElementById('taskDetailsModal').setAttribute('data-task-id', task.id);
+
+            // Load comments and checklist
+            loadTaskComments(task.id);
+            loadTaskChecklist(task.id);
+
+            // Show modal
+            new bootstrap.Modal(document.getElementById('taskDetailsModal')).show();
+        }
+
+        async function loadTaskComments(taskId) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/tasks/${taskId}/comments`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+
+                if (response.ok) {
+                    const comments = await response.json();
+                    const container = document.getElementById('taskComments');
+                    container.innerHTML = '';
+
+                    comments.forEach(comment => {
+                        const commentDiv = document.createElement('div');
+                        commentDiv.className = 'border-bottom pb-2 mb-2';
+                        commentDiv.innerHTML = `
+                            <div class="d-flex justify-content-between">
+                                <strong>${comment.createdBy.fullName}</strong>
+                                <small class="text-muted">${new Date(comment.createdAt).toLocaleString('pt-BR')}</small>
+                            </div>
+                            <p class="mb-0">${comment.content}</p>
+                        `;
+                        container.appendChild(commentDiv);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading comments:', error);
+            }
+        }
+
+        async function loadTaskChecklist(taskId) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/tasks/${taskId}/checklist`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+
+                if (response.ok) {
+                    const items = await response.json();
+                    const container = document.getElementById('taskChecklist');
+                    container.innerHTML = '';
+
+                    items.forEach(item => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'form-check mb-2';
+                        itemDiv.innerHTML = `
+                            <input class="form-check-input" type="checkbox" ${item.isCompleted ? 'checked' : ''}
+                                   onchange="toggleChecklistItem(${item.id})" id="check-${item.id}">
+                            <label class="form-check-label ${item.isCompleted ? 'text-decoration-line-through text-muted' : ''}" for="check-${item.id}">
+                                ${item.description}
+                            </label>
+                        `;
+                        container.appendChild(itemDiv);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading checklist:', error);
+            }
+        }
+
+        async function toggleChecklistItem(itemId) {
+            try {
+                const taskId = document.getElementById('taskDetailsModal').getAttribute('data-task-id');
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/tasks/${taskId}/checklist/${itemId}/toggle`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+
+                if (response.ok) {
+                    loadTaskChecklist(taskId); // Reload checklist
+                } else {
+                    alert('Erro ao atualizar item do checklist');
+                }
+            } catch (error) {
+                console.error('Error toggling checklist item:', error);
+            }
+        }
+
+        async function addComment() {
+            const taskId = document.getElementById('taskDetailsModal').getAttribute('data-task-id');
+            const content = document.getElementById('newCommentText').value.trim();
+
+            if (!content) {
+                alert('Digite um comentário');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/tasks/${taskId}/comments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ content: content })
+                });
+
+                if (response.ok) {
+                    document.getElementById('newCommentText').value = '';
+                    loadTaskComments(taskId); // Reload comments
+                } else {
+                    alert('Erro ao adicionar comentário');
+                }
+            } catch (error) {
+                console.error('Error adding comment:', error);
+            }
+        }
+
+        async function addChecklistItem() {
+            const taskId = document.getElementById('taskDetailsModal').getAttribute('data-task-id');
+            const description = document.getElementById('newChecklistItem').value.trim();
+
+            if (!description) {
+                alert('Digite uma descrição para o item');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/tasks/${taskId}/checklist`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ description: description })
+                });
+
+                if (response.ok) {
+                    document.getElementById('newChecklistItem').value = '';
+                    loadTaskChecklist(taskId); // Reload checklist
+                } else {
+                    alert('Erro ao adicionar item ao checklist');
+                }
+            } catch (error) {
+                console.error('Error adding checklist item:', error);
+            }
+        }
+    </script>
+</body>
+</html>

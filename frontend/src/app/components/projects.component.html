@@ -1,0 +1,195 @@
+<div class="projects-container">
+  <!-- Header -->
+  <div class="projects-header">
+    <div class="header-content">
+      <h1 class="h1">Projetos</h1>
+      <p class="body text-secondary">Gerencie todos os seus projetos</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreateModal()">
+      <i class="icon-plus"></i>
+      Novo Projeto
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="search-filter">
+      <input 
+        type="text" 
+        class="input search-input" 
+        [(ngModel)]="searchTerm"
+        (input)="onSearchChange()"
+        placeholder="Buscar projetos..."
+      >
+    </div>
+    
+    <div class="status-filter">
+      <select 
+        class="input" 
+        [(ngModel)]="selectedStatus"
+        (change)="onStatusChange()"
+      >
+        <option *ngFor="let option of statusOptions" [value]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p class="body">Carregando projetos...</p>
+  </div>
+
+  <!-- Projects Grid -->
+  <div *ngIf="!loading" class="projects-grid">
+    <div *ngIf="filteredProjects.length === 0" class="empty-state">
+      <i class="icon-folder empty-icon"></i>
+      <h3 class="h3">Nenhum projeto encontrado</h3>
+      <p class="body text-secondary">
+        {{ searchTerm || selectedStatus !== 'ALL' ? 'Tente ajustar os filtros' : 'Crie seu primeiro projeto' }}
+      </p>
+      <button *ngIf="!searchTerm && selectedStatus === 'ALL'" class="btn btn-primary" (click)="openCreateModal()">
+        <i class="icon-plus"></i>
+        Criar Projeto
+      </button>
+    </div>
+
+    <div 
+      *ngFor="let project of filteredProjects" 
+      class="project-card card card-interactive"
+      (click)="openProjectDetail(project)"
+    >
+      <div class="project-header">
+        <h3 class="project-title">{{ project.name }}</h3>
+        <span 
+          class="status-badge"
+          [style.background-color]="getStatusColor(project.status)"
+        >
+          {{ getStatusLabel(project.status) }}
+        </span>
+      </div>
+
+      <p class="project-description">{{ project.description }}</p>
+
+      <div class="project-meta">
+        <div class="meta-item">
+          <i class="icon-user"></i>
+          <span>{{ project.createdBy.fullName }}</span>
+        </div>
+        
+        <div class="meta-item" *ngIf="project.startDate">
+          <i class="icon-clock"></i>
+          <span>{{ formatDate(project.startDate) }}</span>
+        </div>
+        
+        <div class="meta-item">
+          <i class="icon-folder"></i>
+          <span>{{ getProjectDuration(project) }}</span>
+        </div>
+      </div>
+
+      <div class="project-footer">
+        <span class="created-date caption text-secondary">
+          Criado em {{ formatDate(project.createdAt) }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Project Modal -->
+<div *ngIf="isCreateModalOpen" class="modal-overlay" (click)="closeCreateModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="h2">Novo Projeto</h2>
+      <button class="btn-close" (click)="closeCreateModal()">
+        <i class="icon-x"></i>
+      </button>
+    </div>
+
+    <form (ngSubmit)="createProject()" class="modal-body">
+      <div class="form-group">
+        <label for="projectName" class="form-label">Nome do Projeto *</label>
+        <input 
+          id="projectName"
+          type="text" 
+          class="input" 
+          [(ngModel)]="newProject.name"
+          name="name"
+          placeholder="Digite o nome do projeto"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="projectDescription" class="form-label">Descrição *</label>
+        <textarea 
+          id="projectDescription"
+          class="input textarea" 
+          [(ngModel)]="newProject.description"
+          name="description"
+          placeholder="Descreva o projeto"
+          rows="4"
+          required
+        ></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="projectStatus" class="form-label">Status</label>
+          <select 
+            id="projectStatus"
+            class="input" 
+            [(ngModel)]="newProject.status"
+            name="status"
+          >
+            <option value="PLANNING">Planejamento</option>
+            <option value="ACTIVE">Ativo</option>
+            <option value="ON_HOLD">Em Espera</option>
+            <option value="COMPLETED">Concluído</option>
+            <option value="CANCELLED">Cancelado</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="startDate" class="form-label">Data de Início</label>
+          <input 
+            id="startDate"
+            type="date" 
+            class="input" 
+            [(ngModel)]="newProject.startDate"
+            name="startDate"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="endDate" class="form-label">Data de Término</label>
+          <input 
+            id="endDate"
+            type="date" 
+            class="input" 
+            [(ngModel)]="newProject.endDate"
+            name="endDate"
+          >
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">
+          Cancelar
+        </button>
+        <button 
+          type="submit" 
+          class="btn btn-primary"
+          [disabled]="!isCreateFormValid()"
+        >
+          Criar Projeto
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,133 @@
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-surface) 0%, #E8F4FD 100%);
+  padding: var(--spacing-medium);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--spacing-x-large);
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-medium);
+  box-shadow: var(--shadow-elevated);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: var(--spacing-x-large);
+  
+  h1 {
+    margin: 0 0 var(--spacing-small) 0;
+    color: var(--color-primary);
+  }
+  
+  p {
+    margin: 0;
+  }
+}
+
+.mode-toggle {
+  display: flex;
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-small);
+  padding: 4px;
+  margin-bottom: var(--spacing-large);
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: var(--spacing-small) var(--spacing-medium);
+  border: none;
+  background: none;
+  border-radius: var(--border-radius-small);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    color: var(--color-text-dark);
+  }
+  
+  &.active {
+    background-color: var(--color-background);
+    color: var(--color-accent);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small);
+  padding: var(--spacing-small) var(--spacing-medium);
+  background-color: rgba(220, 53, 69, 0.1);
+  color: var(--color-error);
+  border-radius: var(--border-radius-small);
+  margin-bottom: var(--spacing-medium);
+  font-size: var(--font-size-caption);
+  
+  i {
+    font-size: 14px;
+  }
+}
+
+.auth-form {
+  margin-bottom: var(--spacing-large);
+}
+
+.form-group {
+  margin-bottom: var(--spacing-medium);
+}
+
+.form-label {
+  display: block;
+  margin-bottom: var(--spacing-small);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-dark);
+}
+
+.loading-spinner-small {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: var(--spacing-small);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.demo-info {
+  text-align: center;
+  padding-top: var(--spacing-medium);
+  border-top: 1px solid var(--color-surface);
+  
+  p {
+    margin: 2px 0;
+  }
+}
+
+// Responsive Design
+@media (max-width: 480px) {
+  .login-container {
+    padding: var(--spacing-small);
+  }
+  
+  .login-card {
+    padding: var(--spacing-large);
+  }
+  
+  .login-header h1 {
+    font-size: 28px;
+  }
+}

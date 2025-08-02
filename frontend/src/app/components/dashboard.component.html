@@ -1,0 +1,179 @@
+<div class="dashboard-container">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="welcome-section">
+      <h1 class="h1">Dashboard</h1>
+      <p class="body text-secondary" *ngIf="currentUser">
+        Bem-vindo, {{ currentUser.fullName }}!
+      </p>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p class="body">Carregando dados...</p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!loading" class="dashboard-content">
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+      <div class="stat-card card">
+        <div class="stat-icon bg-accent">
+          <i class="icon-folder"></i>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-number">{{ stats.totalProjects }}</h3>
+          <p class="stat-label">Projetos</p>
+          <p class="stat-detail caption">{{ stats.activeProjects }} ativos</p>
+        </div>
+      </div>
+
+      <div class="stat-card card">
+        <div class="stat-icon bg-warning">
+          <i class="icon-tasks"></i>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-number">{{ stats.totalTasks }}</h3>
+          <p class="stat-label">Tarefas</p>
+          <p class="stat-detail caption">{{ getCompletionPercentage() }}% concluídas</p>
+        </div>
+      </div>
+
+      <div class="stat-card card">
+        <div class="stat-icon bg-success">
+          <i class="icon-user"></i>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-number">{{ stats.myTasks }}</h3>
+          <p class="stat-label">Minhas Tarefas</p>
+          <p class="stat-detail caption">Atribuídas a mim</p>
+        </div>
+      </div>
+
+      <div class="stat-card card">
+        <div class="stat-icon bg-error">
+          <i class="icon-clock"></i>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-number">{{ stats.overdueTasks }}</h3>
+          <p class="stat-label">Atrasadas</p>
+          <p class="stat-detail caption">Vencimento expirado</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Overview -->
+    <div class="progress-section">
+      <div class="card">
+        <h3 class="h3">Progresso Geral</h3>
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div 
+              class="progress-fill"
+              [style.width.%]="getCompletionPercentage()"
+            ></div>
+          </div>
+          <span class="progress-text">
+            {{ stats.completedTasks }} de {{ stats.totalTasks }} tarefas concluídas
+            ({{ getCompletionPercentage() }}%)
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Grid -->
+    <div class="content-grid">
+      <!-- Recent Tasks -->
+      <div class="recent-section card">
+        <div class="section-header">
+          <h3 class="h3">Tarefas Recentes</h3>
+          <a routerLink="/kanban" class="btn btn-secondary btn-small">
+            Ver Kanban
+          </a>
+        </div>
+
+        <div class="task-list">
+          <div *ngIf="recentTasks.length === 0" class="empty-state">
+            <i class="icon-tasks empty-icon"></i>
+            <p class="caption text-secondary">Nenhuma tarefa encontrada</p>
+          </div>
+
+          <div *ngFor="let task of recentTasks" class="task-item">
+            <div class="task-info">
+              <h4 class="task-title">{{ task.title }}</h4>
+              <p class="task-project caption text-secondary">{{ task.project.name }}</p>
+            </div>
+            <div class="task-meta">
+              <span 
+                class="priority-badge"
+                [style.background-color]="getPriorityColor(task.priority)"
+              >
+                {{ getPriorityLabel(task.priority) }}
+              </span>
+              <span class="status-badge">{{ getStatusLabel(task.status) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- My Tasks -->
+      <div class="my-tasks-section card">
+        <div class="section-header">
+          <h3 class="h3">Minhas Tarefas</h3>
+          <a routerLink="/kanban" class="btn btn-secondary btn-small">
+            Ver Todas
+          </a>
+        </div>
+
+        <div class="task-list">
+          <div *ngIf="myTasks.length === 0" class="empty-state">
+            <i class="icon-user empty-icon"></i>
+            <p class="caption text-secondary">Nenhuma tarefa atribuída</p>
+          </div>
+
+          <div *ngFor="let task of myTasks" class="task-item">
+            <div class="task-info">
+              <h4 class="task-title" [class.overdue]="isOverdue(task)">
+                {{ task.title }}
+                <i *ngIf="isOverdue(task)" class="icon-clock text-error"></i>
+              </h4>
+              <p class="task-project caption text-secondary">{{ task.project.name }}</p>
+              <p *ngIf="task.dueDate" class="task-due caption">
+                Vence em: {{ formatDate(task.dueDate) }}
+              </p>
+            </div>
+            <div class="task-meta">
+              <span 
+                class="priority-badge"
+                [style.background-color]="getPriorityColor(task.priority)"
+              >
+                {{ getPriorityLabel(task.priority) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <h3 class="h3">Ações Rápidas</h3>
+      <div class="actions-grid">
+        <a routerLink="/projects" class="action-card card card-interactive">
+          <i class="icon-folder"></i>
+          <span>Gerenciar Projetos</span>
+        </a>
+        <a routerLink="/kanban" class="action-card card card-interactive">
+          <i class="icon-tasks"></i>
+          <span>Visualizar Kanban</span>
+        </a>
+        <div class="action-card card card-interactive" (click)="loadDashboardData()">
+          <i class="icon-refresh"></i>
+          <span>Atualizar Dados</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

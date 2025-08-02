@@ -1,0 +1,186 @@
+<div class="modal-overlay" (click)="closeModal()">
+  <div class="modal-content task-detail-modal" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="modal-header">
+      <div class="task-header-info">
+        <h2 class="h2 task-title">{{ task.title }}</h2>
+        <div class="task-meta">
+          <span class="project-name caption">{{ task.project.name }}</span>
+          <span 
+            class="priority-badge"
+            [style.background-color]="getPriorityColor(task.priority)"
+          >
+            {{ getPriorityLabel(task.priority) }}
+          </span>
+          <span class="status-badge">{{ getStatusLabel(task.status) }}</span>
+        </div>
+      </div>
+      <button class="btn-close" (click)="closeModal()">
+        <i class="icon-x"></i>
+      </button>
+    </div>
+
+    <!-- Task Info -->
+    <div class="task-info-section">
+      <div class="info-grid">
+        <div class="info-item">
+          <label class="info-label">Atribuído para:</label>
+          <span class="info-value">{{ task.assignedUser?.fullName || 'Não atribuído' }}</span>
+        </div>
+        <div class="info-item">
+          <label class="info-label">Criado por:</label>
+          <span class="info-value">{{ task.createdBy.fullName }}</span>
+        </div>
+        <div class="info-item">
+          <label class="info-label">Criado em:</label>
+          <span class="info-value">{{ formatDate(task.createdAt) }}</span>
+        </div>
+        <div class="info-item" *ngIf="task.dueDate">
+          <label class="info-label">Vencimento:</label>
+          <span class="info-value">{{ formatDateShort(task.dueDate) }}</span>
+        </div>
+      </div>
+
+      <div *ngIf="task.description" class="description-section">
+        <label class="info-label">Descrição:</label>
+        <p class="description-text">{{ task.description }}</p>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs-container">
+      <div class="tabs-header">
+        <button 
+          class="tab-button"
+          [class.active]="activeTab === 'comments'"
+          (click)="setActiveTab('comments')"
+        >
+          <i class="icon-message"></i>
+          Comentários
+          <span class="tab-count">{{ comments.length }}</span>
+        </button>
+        <button 
+          class="tab-button"
+          [class.active]="activeTab === 'checklist'"
+          (click)="setActiveTab('checklist')"
+        >
+          <i class="icon-check-square"></i>
+          Checklist
+          <span class="tab-count">{{ getCompletedChecklistCount() }}/{{ checklistItems.length }}</span>
+        </button>
+      </div>
+
+      <!-- Comments Tab -->
+      <div *ngIf="activeTab === 'comments'" class="tab-content">
+        <!-- Add Comment -->
+        <div class="add-comment-section">
+          <div class="comment-input-group">
+            <textarea 
+              class="input comment-input" 
+              [(ngModel)]="newComment"
+              placeholder="Adicionar comentário..."
+              rows="3"
+              (keydown.ctrl.enter)="addComment()"
+            ></textarea>
+            <button
+              class="btn btn-primary btn-small"
+              (click)="addComment()"
+              [disabled]="!canAddComment()"
+            >
+              <i class="icon-send"></i>
+              Enviar
+            </button>
+          </div>
+        </div>
+
+        <!-- Comments List -->
+        <div class="comments-list">
+          <div *ngIf="comments.length === 0" class="empty-state">
+            <i class="icon-message empty-icon"></i>
+            <p class="caption text-secondary">Nenhum comentário ainda</p>
+          </div>
+          
+          <div *ngFor="let comment of comments" class="comment-item">
+            <div class="comment-header">
+              <span class="comment-author">{{ comment.createdBy.fullName }}</span>
+              <span class="comment-date caption">{{ formatDate(comment.createdAt) }}</span>
+            </div>
+            <p class="comment-content">{{ comment.content }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Checklist Tab -->
+      <div *ngIf="activeTab === 'checklist'" class="tab-content">
+        <!-- Progress Bar -->
+        <div *ngIf="checklistItems.length > 0" class="checklist-progress">
+          <div class="progress-info">
+            <span class="progress-text">
+              {{ getCompletedChecklistCount() }} de {{ checklistItems.length }} concluídos
+            </span>
+            <span class="progress-percentage">{{ getChecklistProgress() | number:'1.0-0' }}%</span>
+          </div>
+          <div class="progress-bar">
+            <div 
+              class="progress-fill"
+              [style.width.%]="getChecklistProgress()"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Add Checklist Item -->
+        <div class="add-checklist-section">
+          <div class="checklist-input-group">
+            <input 
+              type="text"
+              class="input checklist-input" 
+              [(ngModel)]="newChecklistItem"
+              placeholder="Adicionar item ao checklist..."
+              (keydown.enter)="addChecklistItem()"
+            >
+            <button
+              class="btn btn-primary btn-small"
+              (click)="addChecklistItem()"
+              [disabled]="!canAddChecklistItem()"
+            >
+              <i class="icon-plus"></i>
+              Adicionar
+            </button>
+          </div>
+        </div>
+
+        <!-- Checklist Items -->
+        <div class="checklist-items">
+          <div *ngIf="checklistItems.length === 0" class="empty-state">
+            <i class="icon-check-square empty-icon"></i>
+            <p class="caption text-secondary">Nenhum item no checklist</p>
+          </div>
+          
+          <div *ngFor="let item of checklistItems" class="checklist-item">
+            <label class="checklist-label">
+              <input 
+                type="checkbox"
+                class="checklist-checkbox"
+                [checked]="item.isCompleted"
+                (change)="toggleChecklistItem(item)"
+              >
+              <span 
+                class="checklist-text"
+                [class.completed]="item.isCompleted"
+              >
+                {{ item.description }}
+              </span>
+            </label>
+            <button 
+              class="btn-delete"
+              (click)="deleteChecklistItem(item.id)"
+              title="Excluir item"
+            >
+              <i class="icon-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

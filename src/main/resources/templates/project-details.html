@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Projeto: ' + ${project.name}">Detalhes do Projeto</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-project-diagram"></i> Gerenciamento de Projetos
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/projects">Projetos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/kanban">Kanban</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user"></i> <span th:text="${user.username}">Usuário</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/logout">Sair</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Project Header -->
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 th:text="${project.name}">Nome do Projeto</h1>
+                        <p class="text-muted mb-0" th:text="${project.description}">Descrição do projeto</p>
+                    </div>
+                    <div>
+                        <span class="badge fs-6 me-2" th:classappend="${project.status.name() == 'ACTIVE' ? 'bg-success' : (project.status.name() == 'COMPLETED' ? 'bg-primary' : 'bg-secondary')}" 
+                              th:text="${project.status}">Status</span>
+                        <a th:href="@{/projects/{id}/kanban(id=${project.id})}" class="btn btn-primary">
+                            <i class="fas fa-tasks"></i> Ver Kanban
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Info -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-info-circle"></i> Informações do Projeto</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Criado por:</strong> <span th:text="${project.createdBy.fullName}">Criador</span></p>
+                        <p><strong>Data de Criação:</strong> <span th:text="${#temporals.format(project.createdAt, 'dd/MM/yyyy HH:mm')}">Data</span></p>
+                        <p th:if="${project.startDate}"><strong>Data de Início:</strong> <span th:text="${#temporals.format(project.startDate, 'dd/MM/yyyy')}">Data Início</span></p>
+                        <p th:if="${project.endDate}"><strong>Data de Fim:</strong> <span th:text="${#temporals.format(project.endDate, 'dd/MM/yyyy')}">Data Fim</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-bar"></i> Estatísticas</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Total de Tarefas:</strong> <span th:text="${#lists.size(tasks)}">0</span></p>
+                        <p><strong>Concluídas:</strong> <span th:text="${#lists.size(tasks.?[status.name() == 'DONE'])}">0</span></p>
+                        <p><strong>Em Progresso:</strong> <span th:text="${#lists.size(tasks.?[status.name() == 'IN_PROGRESS'])}">0</span></p>
+                        <p><strong>Atas de Reunião:</strong> <span th:text="${#lists.size(meetingMinutes)}">0</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs" id="projectTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tasks-tab" data-bs-toggle="tab" data-bs-target="#tasks" type="button" role="tab">
+                    <i class="fas fa-tasks"></i> Tarefas
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="meetings-tab" data-bs-toggle="tab" data-bs-target="#meetings" type="button" role="tab">
+                    <i class="fas fa-file-alt"></i> Atas de Reunião
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="access-tab" data-bs-toggle="tab" data-bs-target="#access" type="button" role="tab">
+                    <i class="fas fa-users"></i> Acessos
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="projectTabsContent">
+            <!-- Tasks Tab -->
+            <div class="tab-pane fade show active" id="tasks" role="tabpanel">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Tarefas do Projeto</h5>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createTaskModal">
+                            <i class="fas fa-plus"></i> Nova Tarefa
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${#lists.isEmpty(tasks)}" class="text-center py-4">
+                            <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Nenhuma tarefa encontrada neste projeto.</p>
+                        </div>
+                        <div th:if="${!#lists.isEmpty(tasks)}" class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Título</th>
+                                        <th>Status</th>
+                                        <th>Prioridade</th>
+                                        <th>Responsável</th>
+                                        <th>Criado em</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="task : ${tasks}">
+                                        <td th:text="${task.title}">Título da Tarefa</td>
+                                        <td>
+                                            <span class="badge" th:classappend="${task.status.name() == 'DONE' ? 'bg-success' : (task.status.name() == 'IN_PROGRESS' ? 'bg-warning' : 'bg-secondary')}" 
+                                                  th:text="${task.status}">Status</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info" th:text="${task.priority}">Prioridade</span>
+                                        </td>
+                                        <td th:text="${task.assignedUser?.fullName ?: 'Não atribuído'}">Responsável</td>
+                                        <td th:text="${#temporals.format(task.createdAt, 'dd/MM/yyyy')}">Data</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Meeting Minutes Tab -->
+            <div class="tab-pane fade" id="meetings" role="tabpanel">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Atas de Reunião</h5>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadMeetingModal">
+                            <i class="fas fa-upload"></i> Upload Ata
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${#lists.isEmpty(meetingMinutes)}" class="text-center py-4">
+                            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Nenhuma ata de reunião encontrada.</p>
+                        </div>
+                        <div th:if="${!#lists.isEmpty(meetingMinutes)}">
+                            <div th:each="minute : ${meetingMinutes}" class="border-bottom pb-3 mb-3">
+                                <h6 th:text="${minute.title}">Título da Ata</h6>
+                                <p class="text-muted mb-1">
+                                    <i class="fas fa-file"></i> <span th:text="${minute.fileName}">arquivo.pdf</span>
+                                    <span class="ms-2">(<span th:text="${minute.fileSize / 1024}">0</span> KB)</span>
+                                </p>
+                                <p class="text-muted mb-1">
+                                    <i class="fas fa-calendar"></i> Reunião: <span th:text="${minute.meetingDate ? #temporals.format(minute.meetingDate, 'dd/MM/yyyy') : 'Não informado'}">Data</span>
+                                </p>
+                                <p class="text-muted">
+                                    <i class="fas fa-user"></i> Enviado por: <span th:text="${minute.uploadedBy.fullName}">Usuário</span>
+                                    em <span th:text="${#temporals.format(minute.uploadedAt, 'dd/MM/yyyy HH:mm')}">Data</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Access Tab -->
+            <div class="tab-pane fade" id="access" role="tabpanel">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Controle de Acesso</h5>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                            <i class="fas fa-user-plus"></i> Adicionar Usuário
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${#lists.isEmpty(projectAccesses)}" class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Nenhum acesso configurado.</p>
+                        </div>
+                        <div th:if="${!#lists.isEmpty(projectAccesses)}" class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Usuário</th>
+                                        <th>Email</th>
+                                        <th>Papel</th>
+                                        <th>Concedido em</th>
+                                        <th>Concedido por</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="access : ${projectAccesses}">
+                                        <td th:text="${access.user.fullName}">Nome do Usuário</td>
+                                        <td th:text="${access.user.email}">email@exemplo.com</td>
+                                        <td>
+                                            <span class="badge" th:classappend="${access.role.name() == 'OWNER' ? 'bg-danger' : (access.role.name() == 'ADMIN' ? 'bg-warning' : 'bg-info')}" 
+                                                  th:text="${access.role}">Papel</span>
+                                        </td>
+                                        <td th:text="${#temporals.format(access.grantedAt, 'dd/MM/yyyy HH:mm')}">Data</td>
+                                        <td th:text="${access.grantedBy.fullName}">Concedido por</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Task Modal -->
+    <div class="modal fade" id="createTaskModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nova Tarefa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="createTaskForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="projectId" th:value="${project.id}">
+                        <div class="mb-3">
+                            <label for="taskTitle" class="form-label">Título da Tarefa</label>
+                            <input type="text" class="form-control" id="taskTitle" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskDescription" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="taskDescription" name="description" rows="3"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="taskPriority" class="form-label">Prioridade</label>
+                                    <select class="form-select" id="taskPriority" name="priority">
+                                        <option value="LOW">Baixa</option>
+                                        <option value="MEDIUM" selected>Média</option>
+                                        <option value="HIGH">Alta</option>
+                                        <option value="URGENT">Urgente</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="taskDueDate" class="form-label">Data de Vencimento</label>
+                                    <input type="date" class="form-control" id="taskDueDate" name="dueDate">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Criar Tarefa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Meeting Modal -->
+    <div class="modal fade" id="uploadMeetingModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Upload Ata de Reunião</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="uploadMeetingForm" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="meetingTitle" class="form-label">Título da Ata</label>
+                            <input type="text" class="form-control" id="meetingTitle" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="meetingDate" class="form-label">Data da Reunião</label>
+                            <input type="date" class="form-control" id="meetingDate" name="meetingDate">
+                        </div>
+                        <div class="mb-3">
+                            <label for="meetingFile" class="form-label">Arquivo</label>
+                            <input type="file" class="form-control" id="meetingFile" name="file" accept=".pdf,.doc,.docx" required>
+                            <div class="form-text">Formatos aceitos: PDF, DOC, DOCX (máx. 10MB)</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal fade" id="addUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar Usuário ao Projeto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="addUserForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="userSelect" class="form-label">Usuário</label>
+                            <select class="form-select" id="userSelect" name="userId" required>
+                                <option value="">Selecione um usuário...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="userRole" class="form-label">Papel</label>
+                            <select class="form-select" id="userRole" name="role" required>
+                                <option value="VIEWER">Visualizador</option>
+                                <option value="MEMBER" selected>Membro</option>
+                                <option value="ADMIN">Administrador</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Adicionar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const projectId = document.getElementById('projectId').value;
+
+        // Handle task creation
+        document.getElementById('createTaskForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const taskData = {
+                title: formData.get('title'),
+                description: formData.get('description'),
+                priority: formData.get('priority'),
+                dueDate: formData.get('dueDate') ? formData.get('dueDate') + 'T23:59:59' : null,
+                project: { id: parseInt(projectId) }
+            };
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/tasks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(taskData)
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Erro ao criar tarefa');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Erro de conexão');
+            }
+        });
+
+        // Load users when add user modal opens
+        document.getElementById('addUserModal').addEventListener('show.bs.modal', async function() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/users', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+
+                if (response.ok) {
+                    const users = await response.json();
+                    const select = document.getElementById('userSelect');
+                    select.innerHTML = '<option value="">Selecione um usuário...</option>';
+
+                    users.forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.id;
+                        option.textContent = user.fullName + ' (' + user.username + ')';
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        });
+    </script>
+</body>
+</html>

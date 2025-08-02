@@ -1,0 +1,18 @@
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-surface);
+}
+
+.main-content {
+  flex: 1;
+
+  &.with-header {
+    min-height: calc(100vh - 64px);
+  }
+
+  &:not(.with-header) {
+    min-height: 100vh;
+  }
+}
