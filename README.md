@@ -412,11 +412,11 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ## 👨‍💻 Autor
 
-**Desenvolvido com ❤️ por [Seu Nome]**
+**Desenvolvido com ❤️ por Lucas Augusto**
 
-- 📧 Email: seu.email@exemplo.com
-- 💼 LinkedIn: [Seu LinkedIn](https://linkedin.com/in/seu-perfil)
-- 🐙 GitHub: [Seu GitHub](https://github.com/seu-usuario)
+- 💼 LinkedIn: [Lucas Augusto](https://www.linkedin.com/in/lucas-augusto-a7381b11b/)
+- 🐙 GitHub: [lucasaugustodev](https://github.com/lucasaugustodev)
+- 🚀 Projeto: [Flow Tasks](https://github.com/lucasaugustodev/flow-tasks)
 
 ---
 
