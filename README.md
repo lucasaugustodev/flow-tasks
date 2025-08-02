@@ -1,91 +1,427 @@
-# Try Out Development Containers: Java
+# 🚀 Sistema de Gerenciamento de Projetos
 
-[![Open in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/vscode-remote-try-java)
+<div align="center">
 
-A **development container** is a running container with a well-defined tool/runtime stack and its prerequisites. You can try out development containers with **[GitHub Codespaces](https://github.com/features/codespaces)** or **[Visual Studio Code Dev Containers](https://aka.ms/vscode-remote/containers)**.
+![Java](https://img.shields.io/badge/Java-11-orange?style=for-the-badge&logo=java)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-2.7.14-brightgreen?style=for-the-badge&logo=spring)
+![Angular](https://img.shields.io/badge/Angular-16-red?style=for-the-badge&logo=angular)
+![H2 Database](https://img.shields.io/badge/H2-Database-blue?style=for-the-badge&logo=h2)
+![JWT](https://img.shields.io/badge/JWT-Authentication-black?style=for-the-badge&logo=jsonwebtokens)
 
-This is a sample project that lets you try out either option in a few easy steps. We have a variety of other [vscode-remote-try-*](https://github.com/search?q=org%3Amicrosoft+vscode-remote-try-&type=Repositories) sample projects, too.
+**Sistema completo de gerenciamento de projetos e tarefas com interface moderna e funcionalidades avançadas**
 
-> **Note:** If you already have a Codespace or dev container, you can jump to the [Things to try](#things-to-try) section.
+[🎯 Funcionalidades](#-funcionalidades) • [🛠️ Tecnologias](#️-tecnologias) • [🚀 Como Executar](#-como-executar) • [📱 Screenshots](#-screenshots) • [🔧 API](#-api-endpoints)
 
-## Setting up the development container
+</div>
 
-### GitHub Codespaces
-Follow these steps to open this sample in a Codespace:
-1. Click the **Code** drop-down menu.
-2. Click on the **Codespaces** tab.
-3. Click **Create codespace on main**.
+---
 
-For more info, check out the [GitHub documentation](https://docs.github.com/en/free-pro-team@latest/github/developing-online-with-codespaces/creating-a-codespace#creating-a-codespace).
+## 📋 Sobre o Projeto
 
-### VS Code Dev Containers
+Este é um sistema completo de **gerenciamento de projetos e tarefas** desenvolvido com **Spring Boot** no backend e **Angular** no frontend. O sistema oferece uma interface moderna e intuitiva para gerenciar projetos, tarefas, equipes e acompanhar o progresso através de dashboards e quadros Kanban.
 
-If you already have VS Code and Docker installed, you can click the badge above or [here](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/vscode-remote-try-java) to get started. Clicking these links will cause VS Code to automatically install the Dev Containers extension if needed, clone the source code into a container volume, and spin up a dev container for use.
+### ✨ Principais Características
 
-Follow these steps to open this sample in a container using the VS Code Dev Containers extension:
+- 🔐 **Autenticação JWT** segura e robusta
+- 📊 **Dashboard interativo** com métricas em tempo real  
+- 📋 **Quadro Kanban** para gestão visual de tarefas
+- 👥 **Gestão de equipes** e controle de acesso
+- 💬 **Sistema de comentários** em tarefas
+- ✅ **Checklists** para tarefas complexas
+- 📄 **Detalhes completos** de projetos com abas organizadas
+- 📱 **Interface responsiva** para todos os dispositivos
+- 🎨 **Design moderno** com UX otimizada
 
-1. If this is your first time using a development container, please ensure your system meets the pre-reqs (i.e. have Docker installed) in the [getting started steps](https://aka.ms/vscode-remote/containers/getting-started).
+---
 
-2. To use this repository, you can either open the repository in an isolated Docker volume:
+## 🎯 Funcionalidades
 
-    - Press <kbd>F1</kbd> and select the **Dev Containers: Try a Sample...** command.
-    - Choose the "Java" sample, wait for the container to start, and try things out!
-        > **Note:** Under the hood, this will use the **Dev Containers: Clone Repository in Container Volume...** command to clone the source code in a Docker volume instead of the local filesystem. [Volumes](https://docs.docker.com/storage/volumes/) are the preferred mechanism for persisting container data.
+### 🏠 Dashboard
+- **Visão geral** de todos os projetos e tarefas
+- **Métricas visuais** com gráficos e estatísticas
+- **Atividades recentes** e notificações
+- **Acesso rápido** às funcionalidades principais
 
-   Or open a locally cloned copy of the code:
+### 📋 Gestão de Projetos
+- ✅ **Criar, editar e excluir** projetos
+- 📊 **Acompanhar progresso** com barras visuais
+- 👥 **Gerenciar equipe** e permissões de acesso
+- 📅 **Controlar prazos** e marcos importantes
+- 📄 **Página de detalhes** completa com abas:
+  - **Tarefas**: Lista visual de todas as tarefas
+  - **Acessos**: Usuários com permissão no projeto  
+  - **Atas de Reunião**: Documentação e decisões
 
-   - Clone this repository to your local filesystem.
-   - Press <kbd>F1</kbd> and select the **Dev Containers: Open Folder in Container...** command.
-   - Select the cloned copy of this folder, wait for the container to start, and try things out!
+### 📝 Gestão de Tarefas
+- 🎯 **Quadro Kanban** interativo com drag & drop
+- 🏷️ **Prioridades** e status personalizáveis
+- 👤 **Atribuição** de responsáveis
+- 💬 **Sistema de comentários** para colaboração
+- ✅ **Checklists** para quebrar tarefas complexas
+- 📊 **Acompanhamento** de progresso individual
 
-## Things to try
+### 🔐 Segurança e Autenticação
+- 🛡️ **JWT Authentication** com interceptors automáticos
+- 🔒 **Controle de acesso** baseado em papéis
+- 🚪 **Logout automático** em caso de token expirado
+- 🔄 **Renovação** transparente de sessões
 
-Once you have this sample opened, you'll be able to work with it like you would locally.
+---
 
-Some things to try:
+## 🛠️ Tecnologias
 
-1. **Edit:**
-   - Open `src/main/java/com/mycompany/app/App.java`.
-   - Try adding some code and check out the language features.
-   - Make a spelling mistake and notice it is detected. The [Code Spell Checker](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker) extension was automatically installed because it is referenced in `.devcontainer/devcontainer.json`.
-   - Also notice that the [Extension Pack for Java](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-pack) is installed. The JDK is in the `mcr.microsoft.com/devcontainers/java` image and Dev Container settings and metadata are automatically picked up from [image labels](https://containers.dev/implementors/reference/#labels).
+### Backend
+- **Java 11** - Linguagem principal
+- **Spring Boot 2.7.14** - Framework principal
+- **Spring Security** - Autenticação e autorização
+- **Spring Data JPA** - Persistência de dados
+- **H2 Database** - Banco de dados persistente
+- **JWT** - Tokens de autenticação
+- **Maven** - Gerenciamento de dependências
 
-2. **Terminal:** Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>\`</kbd> and type `uname` and other Linux commands from the terminal window.
+### Frontend  
+- **Angular 16** - Framework frontend
+- **TypeScript** - Linguagem tipada
+- **RxJS** - Programação reativa
+- **CSS3** - Estilização moderna
+- **Font Awesome** - Ícones
+- **Responsive Design** - Layout adaptativo
 
-3. **Build, Run, and Debug:**
-   - Open `src/main/java/com/mycompany/app/App.java`.
-   - Add a breakpoint.
-   - Press <kbd>F5</kbd> to launch the app in the container.
-   - Once the breakpoint is hit, try hovering over variables, examining locals, and more.
+### Ferramentas de Desenvolvimento
+- **VS Code** - Editor principal
+- **Dev Containers** - Ambiente de desenvolvimento
+- **Git** - Controle de versão
+- **Docker** - Containerização
 
-4. **Run a Test:**
-   - Open `src/test/java/com/mycompany/app/AppTest.java`.
-   - Put a breakpoint in a test.
-   - Click the `Debug Test` in the Code Lens above the function and watch it hit the breakpoint.
+---
 
-5. **Install Node.js using a Dev Container Feature:**
-   - Press <kbd>F1</kbd> and select the **Dev Containers: Configure Container Features...** or **Codespaces: Configure Container Features...** command.
-   - Type "node" in the text box at the top.
-   - Check the check box next to "Node.js (via nvm) and yarn" (published by devcontainers) 
-   - Click OK
-   - Press <kbd>F1</kbd> and select the **Dev Containers: Rebuild Container** or **Codespaces: Rebuild Container** command so the modifications are picked up.
+## 🚀 Como Executar
 
-  
-## Contributing
+### 📋 Pré-requisitos
+- **Java 11** ou superior
+- **Node.js 16** ou superior  
+- **Maven 3.6** ou superior
+- **Git** para clonar o repositório
 
-This project welcomes contributions and suggestions. Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.microsoft.com.
+### 🔧 Instalação
 
-When you submit a pull request, a CLA-bot will automatically determine whether you need to provide
-a CLA and decorate the PR appropriately (e.g., label, comment). Simply follow the instructions
-provided by the bot. You will only need to do this once across all repos using our CLA.
+1. **Clone o repositório**
+```bash
+git clone <repository-url>
+cd vscode-remote-try-java
+```
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+2. **Execute o Backend**
+```bash
+# Compile e execute o Spring Boot
+mvn clean compile
+mvn spring-boot:run
+```
 
-## License
+3. **Execute o Frontend**
+```bash
+# Navegue para o diretório frontend
+cd frontend
 
-Copyright © Microsoft Corporation All rights reserved.<br />
-Licensed under the MIT License. See LICENSE in the project root for license information.
+# Instale as dependências
+npm install
+
+# Execute o servidor de desenvolvimento
+npm start
+```
+
+4. **Acesse a aplicação**
+- **Frontend**: http://localhost:4200 (ou porta alternativa)
+- **Backend API**: http://localhost:8080
+- **Console H2**: http://localhost:8080/h2-console
+
+### 🐳 Usando Docker (Opcional)
+```bash
+# Build da imagem
+docker build -t project-management .
+
+# Execute o container
+docker run -p 8080:8080 project-management
+```
+
+---
+
+## 👤 Primeiros Passos
+
+### 1. **Criar Usuário**
+- Acesse a aplicação frontend
+- Clique em "Registrar" se não houver usuários
+- Ou use as credenciais padrão se houver dados iniciais
+
+### 2. **Criar Primeiro Projeto**
+- No dashboard, clique em "Novo Projeto"
+- Preencha nome, descrição e datas
+- Defina o status inicial
+
+### 3. **Adicionar Tarefas**
+- Entre no projeto criado
+- Na aba "Tarefas", clique em "Nova Tarefa"
+- Ou use o Kanban para gestão visual
+
+### 4. **Gerenciar Equipe**
+- Na aba "Acessos" do projeto
+- Adicione usuários com diferentes permissões
+- Controle quem pode ver/editar o projeto
+
+---
+
+## ✅ Status de Implementação
+
+### 🎯 **Funcionalidades Completas**
+- ✅ **Autenticação JWT** com interceptors automáticos
+- ✅ **Dashboard** com métricas e estatísticas
+- ✅ **CRUD de Projetos** completo
+- ✅ **CRUD de Tarefas** completo
+- ✅ **Quadro Kanban** interativo
+- ✅ **Sistema de Comentários** em tarefas
+- ✅ **Checklists** para tarefas
+- ✅ **Página de Detalhes** do projeto com abas
+- ✅ **Controle de Acesso** por projeto
+- ✅ **Interface Responsiva** para mobile/desktop
+
+### 🚧 **Funcionalidades Futuras**
+- 🔄 **Notificações** em tempo real
+- 🔄 **Upload de Arquivos** em tarefas
+- 🔄 **Relatórios** e exportação
+- 🔄 **Integração** com calendário
+- 🔄 **API de Webhooks** para integrações
+
+---
+
+## 📱 Capturas de Tela
+
+### 🏠 Dashboard Principal
+- **Visão geral** de todos os projetos e tarefas
+- **Métricas visuais** com estatísticas em tempo real
+- **Navegação intuitiva** entre módulos
+
+### 📋 Quadro Kanban
+- **Gestão visual** de tarefas com drag & drop
+- **Colunas personalizáveis** por status
+- **Filtros** por projeto, responsável e prioridade
+
+### 📄 Detalhes do Projeto
+- **Página completa** com informações organizadas
+- **Abas funcionais**: Tarefas, Acessos, Atas de Reunião
+- **Progress bar** visual do progresso
+
+### 💬 Sistema de Comentários
+- **Colaboração** em tempo real nas tarefas
+- **Histórico** completo de interações
+- **Notificações** de novas mensagens
+
+---
+
+## 🔧 API Endpoints
+
+### 🔐 Autenticação
+```http
+POST /api/auth/signin     # Login do usuário
+POST /api/auth/signup     # Registro de novo usuário
+```
+
+### 📋 Projetos
+```http
+GET    /api/projects           # Listar projetos do usuário
+GET    /api/projects/{id}      # Detalhes do projeto
+POST   /api/projects           # Criar novo projeto
+PUT    /api/projects/{id}      # Atualizar projeto
+DELETE /api/projects/{id}      # Excluir projeto
+```
+
+### 📝 Tarefas
+```http
+GET    /api/tasks                    # Listar tarefas do usuário
+GET    /api/tasks/{id}               # Detalhes da tarefa
+GET    /api/projects/{id}/tasks      # Tarefas do projeto
+POST   /api/tasks                   # Criar nova tarefa
+PUT    /api/tasks/{id}              # Atualizar tarefa
+PUT    /api/tasks/{id}/status       # Atualizar status
+PUT    /api/tasks/{id}/assign       # Atribuir responsável
+DELETE /api/tasks/{id}              # Excluir tarefa
+```
+
+### 💬 Comentários
+```http
+GET  /api/tasks/{id}/comments       # Listar comentários
+POST /api/tasks/{id}/comments       # Adicionar comentário
+```
+
+### ✅ Checklists
+```http
+GET    /api/tasks/{id}/checklist           # Listar itens
+POST   /api/tasks/{id}/checklist           # Adicionar item
+PUT    /api/tasks/{taskId}/checklist/{id}/toggle  # Marcar/desmarcar
+DELETE /api/tasks/{taskId}/checklist/{id}  # Excluir item
+```
+
+### 👥 Usuários
+```http
+GET /api/users        # Listar usuários
+GET /api/users/me     # Usuário atual
+```
+
+---
+
+## 📁 Estrutura do Projeto
+
+```
+flow-tasks/
+├── 📁 src/main/java/com/projectmanagement/
+│   ├── 📁 controller/          # Controladores REST API
+│   ├── 📁 service/            # Lógica de negócio
+│   ├── 📁 repository/         # Acesso a dados (JPA)
+│   ├── 📁 model/             # Entidades do banco
+│   ├── 📁 security/          # Configurações JWT
+│   ├── 📁 dto/              # Data Transfer Objects
+│   └── 📁 config/           # Configurações Spring
+├── 📁 frontend/
+│   ├── 📁 src/app/
+│   │   ├── 📁 components/    # Componentes Angular
+│   │   ├── 📁 services/     # Serviços e APIs
+│   │   ├── 📁 models/       # Interfaces TypeScript
+│   │   ├── 📁 guards/       # Guards de autenticação
+│   │   ├── 📁 interceptors/ # Interceptors HTTP
+│   │   └── 📁 styles/       # Estilos globais
+│   ├── 📄 package.json      # Dependências Node.js
+│   └── 📄 angular.json      # Configuração Angular
+├── 📄 pom.xml               # Dependências Maven
+├── 📄 README.md             # Este arquivo
+└── 📄 .gitignore           # Arquivos ignorados
+```
+
+---
+
+## 🏗️ Arquitetura
+
+### Backend (Spring Boot)
+```
+src/main/java/com/projectmanagement/
+├── controller/          # Controladores REST
+├── service/            # Lógica de negócio
+├── repository/         # Acesso a dados
+├── model/             # Entidades JPA
+├── security/          # Configurações de segurança
+├── dto/              # Data Transfer Objects
+└── config/           # Configurações gerais
+```
+
+### Frontend (Angular)
+```
+frontend/src/app/
+├── components/        # Componentes da UI
+├── services/         # Serviços e APIs
+├── models/          # Interfaces TypeScript
+├── guards/          # Guards de rota
+├── interceptors/    # Interceptors HTTP
+└── styles/         # Estilos globais
+```
+
+---
+
+## 🔒 Configuração de Segurança
+
+### JWT Configuration
+```properties
+# JWT Secret (deve ser alterado em produção)
+app.jwtSecret=projectManagementSecretKey
+app.jwtExpirationMs=86400000  # 24 horas
+```
+
+### Database Configuration
+```properties
+# H2 Database (persistente)
+spring.datasource.url=jdbc:h2:file:./data/projectmanagement
+spring.h2.console.enabled=true
+```
+
+---
+
+## 🧪 Testes
+
+### Executar Testes Backend
+```bash
+mvn test
+```
+
+### Executar Testes Frontend
+```bash
+cd frontend
+npm test
+```
+
+### Cobertura de Testes
+```bash
+# Backend
+mvn jacoco:report
+
+# Frontend  
+ng test --code-coverage
+```
+
+---
+
+## 🚀 Deploy
+
+### Produção
+1. **Build do Frontend**
+```bash
+cd frontend
+ng build --prod
+```
+
+2. **Package do Backend**
+```bash
+mvn clean package
+```
+
+3. **Execute o JAR**
+```bash
+java -jar target/project-management-system-1.0.0.jar
+```
+
+### Docker
+```dockerfile
+# Dockerfile já configurado
+docker build -t project-management .
+docker run -p 8080:8080 project-management
+```
+
+---
+
+## 🤝 Contribuição
+
+1. **Fork** o projeto
+2. **Crie** uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. **Commit** suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. **Push** para a branch (`git push origin feature/AmazingFeature`)
+5. **Abra** um Pull Request
+
+---
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+---
+
+## 👨‍💻 Autor
+
+**Desenvolvido com ❤️ por [Seu Nome]**
+
+- 📧 Email: seu.email@exemplo.com
+- 💼 LinkedIn: [Seu LinkedIn](https://linkedin.com/in/seu-perfil)
+- 🐙 GitHub: [Seu GitHub](https://github.com/seu-usuario)
+
+---
+
+<div align="center">
+
+**⭐ Se este projeto te ajudou, considere dar uma estrela!**
+
+</div>
