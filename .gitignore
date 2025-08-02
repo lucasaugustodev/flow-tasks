@@ -332,3 +332,38 @@ ASALocalRun/
 *.DS_Store
 
 target
+
+# Angular specific
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/.nx/cache/
+frontend/coverage/
+frontend/.nyc_output/
+
+# Java specific
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+
+# Database files
+data/
+*.db
+*.h2.db
+
+# IDE files
+.vscode/
+*.swp
+*.swo
+
+# OS files
+Thumbs.db
+
+# Logs
+logs/
+
+# Temporary files
+tmp/
+temp/
