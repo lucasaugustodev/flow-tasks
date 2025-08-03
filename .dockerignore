@@ -36,5 +36,12 @@ data/
 # Duplicate frontend folder
 project-management-frontend/
 
-# Railway specific
+# Deployment specific
 .railway/
+.fly/
+fly.toml
+
+# Build scripts
+build-frontend.sh
+build-and-deploy.sh
+nixpacks.toml
