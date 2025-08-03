@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README*.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+LICENSE
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Logs
+*.log
+*.tmp
+
+# Frontend build artifacts (will be built in Docker)
+frontend/node_modules/
+frontend/.angular/
+frontend/dist/
+
+# Backend build artifacts (will be built in Docker)
+target/
+.mvn/
+mvnw
+mvnw.cmd
+
+# Database files
+data/
+*.mv.db
+*.trace.db
+
+# Duplicate frontend folder
+project-management-frontend/
+
+# Railway specific
+.railway/

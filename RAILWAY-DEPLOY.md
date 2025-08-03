@@ -44,9 +44,19 @@ Set these in Railway:
 
 ### Deployment Steps
 1. Connect Railway to your GitHub repository
-2. Railway will automatically detect Java project
-3. Build process runs: `mvn clean package -DskipTests`
+2. Railway will automatically detect the project using nixpacks.toml
+3. Build process:
+   - Installs Node.js 18 and Maven
+   - Builds Angular frontend: `cd frontend && npm install && npm run build`
+   - Copies frontend files to Spring Boot static resources
+   - Builds Spring Boot JAR: `mvn clean package -DskipTests`
 4. App starts with: `java -Dserver.port=$PORT -Dspring.profiles.active=prod -jar target/project-management-system-1.0-SNAPSHOT.jar`
+
+### Alternative Deployment Methods
+The project includes multiple deployment configurations:
+- **nixpacks.toml**: Primary method (recommended for Railway)
+- **Dockerfile**: Multi-stage Docker build
+- **railway.json**: Railway-specific configuration
 
 ### Troubleshooting
 - Check Railway logs for build/runtime errors

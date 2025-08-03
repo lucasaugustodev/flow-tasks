@@ -1,0 +1,13 @@
+[phases.setup]
+nixPkgs = ["nodejs-18_x", "maven"]
+
+[phases.build]
+cmds = [
+    "cd frontend && npm install && npm run build",
+    "mkdir -p src/main/resources/static",
+    "cp -r frontend/dist/frontend/* src/main/resources/static/ || echo 'Frontend files not found'",
+    "mvn clean package -DskipTests"
+]
+
+[start]
+cmd = "java -Dserver.port=$PORT -Dspring.profiles.active=prod -jar target/project-management-system-1.0-SNAPSHOT.jar"
