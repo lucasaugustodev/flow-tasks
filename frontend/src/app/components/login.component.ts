@@ -89,9 +89,45 @@ export class LoginComponent implements OnInit {
     this.loading = true;
     this.error = '';
 
-    // Implementar registro quando a API estiver disponível
-    this.error = 'Registro não implementado ainda';
-    this.loading = false;
+    console.log('Attempting registration with:', this.registerForm.username);
+
+    const signupData = {
+      username: this.registerForm.username.trim(),
+      email: this.registerForm.email.trim(),
+      password: this.registerForm.password,
+      fullName: this.registerForm.fullName.trim()
+    };
+
+    this.apiService.register(signupData).subscribe({
+      next: (response) => {
+        console.log('Registration successful:', response);
+        this.loading = false;
+        this.error = '';
+
+        // Show success message
+        alert('Usuário registrado com sucesso! Você pode fazer login agora.');
+
+        // Switch to login mode
+        this.isLoginMode = true;
+        this.resetForms();
+      },
+      error: (error) => {
+        console.error('Registration error:', error);
+        this.loading = false;
+
+        if (error.status === 400 && error.error?.message) {
+          if (error.error.message.includes('Username is already taken')) {
+            this.error = 'Este nome de usuário já está em uso';
+          } else if (error.error.message.includes('Email is already in use')) {
+            this.error = 'Este email já está em uso';
+          } else {
+            this.error = error.error.message;
+          }
+        } else {
+          this.error = 'Erro ao registrar usuário. Tente novamente.';
+        }
+      }
+    });
   }
 
   private isRegisterFormValid(): boolean {
@@ -129,10 +165,10 @@ export class LoginComponent implements OnInit {
 
   isRegisterFormValidForSubmit(): boolean {
     const form = this.registerForm;
-    return form.username.trim().length > 0 && 
-           form.email.trim().length > 0 && 
-           form.fullName.trim().length > 0 && 
-           form.password.trim().length > 0 && 
+    return form.username.trim().length > 0 &&
+           form.email.trim().length > 0 &&
+           form.fullName.trim().length > 0 &&
+           form.password.trim().length > 0 &&
            form.confirmPassword.trim().length > 0 &&
            form.password === form.confirmPassword;
   }

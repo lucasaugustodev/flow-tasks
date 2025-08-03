@@ -103,6 +103,13 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface SignupRequest {
+  username: string;
+  email: string;
+  password: string;
+  fullName: string;
+}
+
 export interface LoginResponse {
   accessToken: string;
   tokenType: string;
@@ -110,6 +117,10 @@ export interface LoginResponse {
   username: string;
   email: string;
   roles: string[];
+}
+
+export interface MessageResponse {
+  message: string;
 }
 
 // Kanban Column Configuration

@@ -1,18 +1,20 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
-import { 
-  Task, 
-  Project, 
-  User, 
-  TaskComment, 
+import {
+  Task,
+  Project,
+  User,
+  TaskComment,
   TaskChecklistItem,
   CreateTaskRequest,
   UpdateTaskStatusRequest,
   CreateCommentRequest,
   CreateChecklistItemRequest,
   LoginRequest,
-  LoginResponse
+  LoginResponse,
+  SignupRequest,
+  MessageResponse
 } from '../models/task.model';
 
 @Injectable({
@@ -62,6 +64,11 @@ export class ApiService {
   // Authentication
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.baseUrl}/auth/signin`, credentials);
+  }
+
+  register(signupData: SignupRequest): Observable<MessageResponse> {
+    console.log('Registering user with data:', signupData);
+    return this.http.post<MessageResponse>(`${this.baseUrl}/auth/signup`, signupData);
   }
 
   logout(): void {
