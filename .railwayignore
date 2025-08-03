@@ -1,0 +1,30 @@
+# Development files
+.vscode/
+.idea/
+*.log
+*.tmp
+
+# Frontend development files (will be built during deployment)
+frontend/node_modules/
+frontend/.angular/
+frontend/dist/
+
+# Backend development files
+target/
+.mvn/
+mvnw
+mvnw.cmd
+
+# Database files (using in-memory in production)
+data/
+*.mv.db
+*.trace.db
+
+# Documentation
+README*.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+LICENSE
+
+# Duplicate frontend folder
+project-management-frontend/

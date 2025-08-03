@@ -25,6 +25,11 @@ import javax.validation.Valid;
 @RequestMapping("/api/auth")
 public class AuthController {
 
+    @GetMapping("/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("OK");
+    }
+
     @Autowired
     AuthenticationManager authenticationManager;
 
