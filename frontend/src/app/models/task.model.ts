@@ -137,6 +137,20 @@ export interface TaskColumn {
   createdByName: string;
 }
 
+export interface MeetingRecord {
+  id: number;
+  title: string;
+  summary?: string;
+  meetingDate?: string;
+  participants: string[];
+  decisions: string[];
+  nextActions: string[];
+  project: Project;
+  createdBy: User;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Kanban Column Configuration
 export interface KanbanColumn {
   id: string;

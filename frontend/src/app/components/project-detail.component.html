@@ -257,39 +257,59 @@
             </button>
           </div>
 
-          <div class="meetings-list">
-            <div 
-              *ngFor="let meeting of meetingMinutes" 
-              class="meeting-card card"
-            >
+          <div class="meetings-list" *ngIf="meetingRecords.length > 0">
+            <div
+              *ngFor="let meeting of meetingRecords"
+              class="meeting-card card">
               <div class="meeting-header">
                 <h4 class="meeting-title">{{ meeting.title }}</h4>
-                <span class="meeting-date">{{ formatDate(meeting.date) }}</span>
+                <div class="meeting-header-actions">
+                  <span class="meeting-date">{{ formatDate(meeting.meetingDate || meeting.createdAt) }}</span>
+                  <button class="btn btn-danger btn-small" (click)="deleteMeeting(meeting.id)">
+                    <i class="icon-trash"></i>
+                  </button>
+                </div>
               </div>
 
-              <div class="meeting-participants">
+              <div class="meeting-participants" *ngIf="meeting.participants && meeting.participants.length > 0">
                 <strong>Participantes:</strong>
                 <span class="participants-list">{{ meeting.participants.join(', ') }}</span>
               </div>
 
-              <div class="meeting-summary">
+              <div class="meeting-summary" *ngIf="meeting.summary">
                 <p>{{ meeting.summary }}</p>
               </div>
 
-              <div class="meeting-decisions" *ngIf="meeting.decisions.length > 0">
+              <div class="meeting-decisions" *ngIf="meeting.decisions && meeting.decisions.length > 0">
                 <strong>Decisões:</strong>
                 <ul>
                   <li *ngFor="let decision of meeting.decisions">{{ decision }}</li>
                 </ul>
               </div>
 
-              <div class="meeting-actions" *ngIf="meeting.nextActions.length > 0">
+              <div class="meeting-actions" *ngIf="meeting.nextActions && meeting.nextActions.length > 0">
                 <strong>Próximas Ações:</strong>
                 <ul>
                   <li *ngFor="let action of meeting.nextActions">{{ action }}</li>
                 </ul>
               </div>
+
+              <div class="meeting-meta">
+                <span class="created-by caption">
+                  Por {{ meeting.createdBy.fullName }}
+                </span>
+              </div>
             </div>
+          </div>
+
+          <div class="empty-state" *ngIf="meetingRecords.length === 0">
+            <i class="icon-calendar"></i>
+            <h3 class="h3">Nenhuma ata de reunião</h3>
+            <p>Ainda não há atas de reunião para este projeto.</p>
+            <button class="btn btn-primary" (click)="openCreateMeetingModal()">
+              <i class="icon-plus"></i>
+              Criar Primeira Ata
+            </button>
           </div>
         </div>
       </div>
@@ -453,7 +473,7 @@
           <button type="button" class="btn btn-secondary" (click)="closeCreateMeetingModal()">
             Cancelar
           </button>
-          <button type="submit" class="btn btn-primary" [disabled]="!newMeeting.title.trim()">
+          <button type="submit" class="btn btn-primary" [disabled]="!newMeeting.title?.trim()">
             Criar Ata
           </button>
         </div>

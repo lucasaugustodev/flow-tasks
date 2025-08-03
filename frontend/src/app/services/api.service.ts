@@ -8,6 +8,7 @@ import {
   TaskComment,
   TaskChecklistItem,
   TaskColumn,
+  MeetingRecord,
   CreateTaskRequest,
   UpdateTaskStatusRequest,
   CreateCommentRequest,
@@ -223,5 +224,26 @@ export class ApiService {
 
   deleteTaskColumn(projectId: number, columnId: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/projects/${projectId}/columns/${columnId}`);
+  }
+
+  // Meeting Records
+  getMeetingRecords(projectId: number): Observable<MeetingRecord[]> {
+    return this.http.get<MeetingRecord[]>(`${this.baseUrl}/projects/${projectId}/meetings`);
+  }
+
+  getMeetingRecord(projectId: number, meetingId: number): Observable<MeetingRecord> {
+    return this.http.get<MeetingRecord>(`${this.baseUrl}/projects/${projectId}/meetings/${meetingId}`);
+  }
+
+  createMeetingRecord(projectId: number, meeting: Partial<MeetingRecord>): Observable<MeetingRecord> {
+    return this.http.post<MeetingRecord>(`${this.baseUrl}/projects/${projectId}/meetings`, meeting);
+  }
+
+  updateMeetingRecord(projectId: number, meetingId: number, meeting: Partial<MeetingRecord>): Observable<MeetingRecord> {
+    return this.http.put<MeetingRecord>(`${this.baseUrl}/projects/${projectId}/meetings/${meetingId}`, meeting);
+  }
+
+  deleteMeetingRecord(projectId: number, meetingId: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/projects/${projectId}/meetings/${meetingId}`);
   }
 }

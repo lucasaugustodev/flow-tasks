@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { ApiService } from '../services/api.service';
-import { Project, Task, User, TaskStatus, TaskPriority, CreateTaskRequest, TaskColumn } from '../models/task.model';
+import { Project, Task, User, TaskStatus, TaskPriority, CreateTaskRequest, TaskColumn, MeetingRecord } from '../models/task.model';
 
 @Component({
   selector: 'app-project-detail',
@@ -17,6 +17,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   projectUsers: User[] = [];
   allUsers: User[] = [];
   taskColumns: TaskColumn[] = [];
+  meetingRecords: MeetingRecord[] = [];
   loading = false;
   activeTab: 'tasks' | 'access' | 'meetings' = 'tasks';
 
@@ -37,13 +38,13 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     dueDate: ''
   };
 
-  newMeeting = {
+  newMeeting: Partial<MeetingRecord> = {
     title: '',
     summary: '',
     meetingDate: '',
-    participants: [] as string[],
-    decisions: [] as string[],
-    nextActions: [] as string[]
+    participants: [],
+    decisions: [],
+    nextActions: []
   };
 
   selectedUsersToAdd: number[] = [];
@@ -119,16 +120,18 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
       project: this.apiService.getProject(projectId),
       tasks: this.apiService.getTasksByProject(projectId),
       users: this.apiService.getUsers(),
-      columns: this.apiService.getTaskColumns(projectId)
+      columns: this.apiService.getTaskColumns(projectId),
+      meetings: this.apiService.getMeetingRecords(projectId)
     }).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
-      next: ({ project, tasks, users, columns }) => {
+      next: ({ project, tasks, users, columns, meetings }) => {
         this.project = project;
         this.projectTasks = tasks;
         this.allUsers = users;
         this.projectUsers = users;
         this.taskColumns = columns;
+        this.meetingRecords = meetings;
         this.calculateTaskStats();
         this.loading = false;
       },
@@ -369,15 +372,57 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     this.isCreateMeetingModalOpen = false;
   }
 
-  createMeeting(): void {
-    if (!this.newMeeting.title.trim()) {
+  deleteMeeting(meetingId: number): void {
+    if (!confirm('Tem certeza que deseja excluir esta ata de reunião?')) {
       return;
     }
 
-    // TODO: Implement meeting creation API call
-    console.log('Creating meeting:', this.newMeeting);
-    alert('Funcionalidade de atas de reunião será implementada em breve!');
-    this.closeCreateMeetingModal();
+    if (!this.project?.id) {
+      return;
+    }
+
+    this.apiService.deleteMeetingRecord(this.project.id, meetingId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.meetingRecords = this.meetingRecords.filter(m => m.id !== meetingId);
+        },
+        error: (error) => {
+          console.error('Error deleting meeting:', error);
+          alert('Erro ao excluir ata de reunião: ' + (error.error?.message || error.message));
+        }
+      });
+  }
+
+  createMeeting(): void {
+    if (!this.newMeeting.title?.trim()) {
+      return;
+    }
+
+    if (!this.project?.id) {
+      return;
+    }
+
+    // Convert meetingDate string to ISO format if provided
+    const meetingData: Partial<MeetingRecord> = {
+      ...this.newMeeting,
+      meetingDate: this.newMeeting.meetingDate ?
+        new Date(this.newMeeting.meetingDate).toISOString() :
+        undefined
+    };
+
+    this.apiService.createMeetingRecord(this.project.id, meetingData)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (meeting) => {
+          this.meetingRecords.unshift(meeting);
+          this.closeCreateMeetingModal();
+        },
+        error: (error) => {
+          console.error('Error creating meeting:', error);
+          alert('Erro ao criar ata de reunião: ' + (error.error?.message || error.message));
+        }
+      });
   }
 
   // User Access Management
