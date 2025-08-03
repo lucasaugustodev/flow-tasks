@@ -28,21 +28,14 @@ INSERT INTO project_access (project_id, user_id, role, granted_at, granted_by) V
 (3, 3, 'ADMIN', CURRENT_TIMESTAMP, 2),
 (3, 4, 'MEMBER', CURRENT_TIMESTAMP, 2);
 
--- Insert sample tasks
-INSERT INTO tasks (title, description, status, priority, project_id, assigned_user_id, created_by, created_at, updated_at) VALUES
-('Configurar ambiente de desenvolvimento', 'Configurar Docker, banco de dados e dependências', 'DONE', 'HIGH', 1, 2, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Criar modelo de dados', 'Definir entidades e relacionamentos do banco', 'DONE', 'HIGH', 1, 2, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Implementar autenticação', 'Sistema de login e registro de usuários', 'IN_PROGRESS', 'HIGH', 1, 3, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Desenvolver catálogo de produtos', 'Listagem e busca de produtos', 'READY_TO_DEVELOP', 'MEDIUM', 1, 2, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Implementar carrinho de compras', 'Funcionalidade de adicionar/remover produtos', 'BACKLOG', 'MEDIUM', 1, 3, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+-- Sample tasks removed - only user-created tasks will be shown
 
-('Design da interface', 'Criar mockups e protótipos', 'IN_PROGRESS', 'HIGH', 2, 4, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Configurar projeto React Native', 'Setup inicial do projeto mobile', 'READY_TO_DEVELOP', 'HIGH', 2, 4, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Implementar navegação', 'Sistema de navegação entre telas', 'BACKLOG', 'MEDIUM', 2, 4, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-
-('Análise de requisitos', 'Levantamento das necessidades do cliente', 'DONE', 'HIGH', 3, 3, 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Criar layout responsivo', 'Design adaptável para diferentes dispositivos', 'IN_PROGRESS', 'HIGH', 3, 4, 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Desenvolver páginas institucionais', 'Sobre, Contato, Serviços', 'READY_TO_DEVELOP', 'MEDIUM', 3, 3, 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+-- Update existing tasks to use correct status values
+UPDATE tasks SET status = 'BACKLOG' WHERE status = 'Backlog';
+UPDATE tasks SET status = 'READY_TO_DEVELOP' WHERE status = 'A Fazer';
+UPDATE tasks SET status = 'IN_PROGRESS' WHERE status = 'Em Progresso';
+UPDATE tasks SET status = 'IN_REVIEW' WHERE status = 'Em Revisão';
+UPDATE tasks SET status = 'DONE' WHERE status = 'Concluído';
 
 -- Insert sample meeting minutes
 INSERT INTO meeting_minutes (title, file_name, file_path, file_size, content_type, meeting_date, uploaded_at, project_id, uploaded_by) VALUES

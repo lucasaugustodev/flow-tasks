@@ -33,7 +33,20 @@ public class TaskController {
     @GetMapping
     public ResponseEntity<List<Task>> getAllTasks(Authentication authentication) {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        List<Task> tasks = taskService.getTasksByAssignedUserId(userPrincipal.getId());
+
+        // Return all tasks from projects that the user has access to
+        List<Task> tasks = taskService.getTasksByUserProjects(userPrincipal.getId());
+
+        System.out.println("=== BACKEND TASKS DEBUG ===");
+        System.out.println("User ID: " + userPrincipal.getId());
+        System.out.println("Tasks found: " + tasks.size());
+        for (Task task : tasks) {
+            System.out.println("Task: " + task.getTitle() +
+                             " | Status: '" + task.getStatus() + "'" +
+                             " | Project: " + (task.getProject() != null ? task.getProject().getName() : "NULL"));
+        }
+        System.out.println("=== END BACKEND TASKS DEBUG ===");
+
         return ResponseEntity.ok(tasks);
     }
 

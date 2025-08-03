@@ -19,38 +19,44 @@ import {
 })
 export class KanbanBoardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+
+  // Filter properties
+  projects: Project[] = [];
+  selectedProjectId: number | string = '';
+  allTasks: Task[] = [];
+  filteredTasks: Task[] = [];
   
   columns: KanbanColumn[] = [
     {
-      id: 'Backlog',
+      id: 'BACKLOG',
       title: 'Backlog',
       icon: 'inbox',
       color: '#666666',
       tasks: []
     },
     {
-      id: 'A Fazer',
+      id: 'READY_TO_DEVELOP',
       title: 'A Fazer',
       icon: 'play',
       color: '#007AFF',
       tasks: []
     },
     {
-      id: 'Em Progresso',
+      id: 'IN_PROGRESS',
       title: 'Em Progresso',
       icon: 'spinner',
       color: '#FFC107',
       tasks: []
     },
     {
-      id: 'Em Revisão',
+      id: 'IN_REVIEW',
       title: 'Em Revisão',
       icon: 'eye',
       color: '#6f42c1',
       tasks: []
     },
     {
-      id: 'Concluído',
+      id: 'DONE',
       title: 'Concluído',
       icon: 'check',
       color: '#28A745',
@@ -59,7 +65,6 @@ export class KanbanBoardComponent implements OnInit, OnDestroy {
   ];
 
   users: User[] = [];
-  projects: Project[] = [];
   selectedTask: Task | null = null;
   isCreateTaskModalOpen = false;
   isTaskDetailModalOpen = false;
@@ -103,9 +108,23 @@ export class KanbanBoardComponent implements OnInit, OnDestroy {
           usersCount: users.length,
           projectsCount: projects.length
         });
+
+        console.log('=== DETAILED TASKS DEBUG ===');
+        console.log('Raw tasks received:', tasks);
+        tasks.forEach((task, index) => {
+          console.log(`Task ${index + 1}:`, {
+            id: task.id,
+            title: task.title,
+            status: task.status,
+            project: task.project ? { id: task.project.id, name: task.project.name } : 'NO PROJECT'
+          });
+        });
+        console.log('=== END DETAILED TASKS DEBUG ===');
+
+        this.allTasks = tasks;
         this.users = users;
         this.projects = projects;
-        this.organizeTasks(tasks);
+        this.applyFilters();
         this.loading = false;
       },
       error: (error) => {
@@ -116,17 +135,92 @@ export class KanbanBoardComponent implements OnInit, OnDestroy {
     });
   }
 
+  applyFilters(): void {
+    console.log('=== APPLY FILTERS DEBUG ===');
+    console.log('selectedProjectId:', this.selectedProjectId, 'type:', typeof this.selectedProjectId);
+    console.log('allTasks count:', this.allTasks.length);
+
+    // Filter tasks by selected project
+    if (this.selectedProjectId && this.selectedProjectId !== '') {
+      // Convert selectedProjectId to number for comparison
+      const projectId = Number(this.selectedProjectId);
+      console.log('Filtering for projectId:', projectId);
+
+      this.filteredTasks = this.allTasks.filter(task => {
+        const matches = task.project && task.project.id === projectId;
+        console.log(`Task "${task.title}" (project: ${task.project?.id}) matches: ${matches}`);
+        return matches;
+      });
+
+      console.log('Filtered tasks count:', this.filteredTasks.length);
+    } else {
+      this.filteredTasks = [...this.allTasks];
+      console.log('Using all tasks:', this.filteredTasks.length);
+    }
+
+    console.log('Tasks going to organizeTasks:', this.filteredTasks.length);
+    console.log('=== END APPLY FILTERS DEBUG ===');
+    this.organizeTasks(this.filteredTasks);
+  }
+
+  onProjectFilterChange(): void {
+    this.applyFilters();
+  }
+
+  clearProjectFilter(): void {
+    this.selectedProjectId = '';
+    this.applyFilters();
+  }
+
   private organizeTasks(tasks: Task[]): void {
+    console.log('=== ORGANIZE TASKS DEBUG ===');
+    console.log('Tasks to organize:', tasks.length);
+    console.log('Available columns:', this.columns.map(c => ({ id: c.id, title: c.title })));
+
+    // Status mapping for legacy tasks (Portuguese to English)
+    const statusMapping: { [key: string]: string } = {
+      'Backlog': 'BACKLOG',
+      'A Fazer': 'READY_TO_DEVELOP',
+      'Em Progresso': 'IN_PROGRESS',
+      'Em Revisão': 'IN_REVIEW',
+      'Concluído': 'DONE'
+    };
+
     // Reset all columns
     this.columns.forEach(column => column.tasks = []);
-    
+
     // Organize tasks by status
     tasks.forEach(task => {
-      const column = this.columns.find(col => col.id === task.status);
+      console.log(`Processing task: "${task.title}" with status: "${task.status}"`);
+
+      // Map legacy status to new status
+      const mappedStatus = statusMapping[task.status] || task.status;
+      console.log(`Mapped status: "${task.status}" -> "${mappedStatus}"`);
+
+      const column = this.columns.find(col => col.id === mappedStatus);
       if (column) {
         column.tasks.push(task);
+        console.log(`✓ Added to column: ${column.title}`);
+      } else {
+        console.log(`✗ No column found for mapped status: "${mappedStatus}"`);
+        console.log('Available column IDs:', this.columns.map(c => c.id));
       }
     });
+
+    console.log('Final column distribution:');
+    this.columns.forEach(column => {
+      console.log(`${column.title} (${column.id}): ${column.tasks.length} tasks`);
+      if (column.tasks.length > 0) {
+        column.tasks.forEach(task => {
+          console.log(`  - ${task.title} (${task.status})`);
+        });
+      }
+    });
+    console.log('=== END ORGANIZE TASKS DEBUG ===');
+  }
+
+  getConnectedDropLists(): string[] {
+    return this.columns.map((_, index) => `column-${index}`);
   }
 
   onDrop(event: CdkDragDrop<Task[]>): void {

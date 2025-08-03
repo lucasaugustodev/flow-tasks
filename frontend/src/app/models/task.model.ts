@@ -55,11 +55,11 @@ export interface TaskChecklistItem {
 }
 
 export enum TaskStatus {
-  BACKLOG = 'Backlog',
-  TODO = 'A Fazer',
-  IN_PROGRESS = 'Em Progresso',
-  IN_REVIEW = 'Em Revisão',
-  DONE = 'Concluído'
+  BACKLOG = 'BACKLOG',
+  READY_TO_DEVELOP = 'READY_TO_DEVELOP',
+  IN_PROGRESS = 'IN_PROGRESS',
+  IN_REVIEW = 'IN_REVIEW',
+  DONE = 'DONE'
 }
 
 export enum TaskPriority {

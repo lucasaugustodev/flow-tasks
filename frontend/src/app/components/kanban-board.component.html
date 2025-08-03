@@ -1,7 +1,27 @@
 <div class="kanban-container">
   <!-- Header -->
   <div class="kanban-header">
-    <h1 class="h1">Kanban Board</h1>
+    <div class="header-left">
+      <h1 class="h1">Kanban Board</h1>
+      <div class="project-filter">
+        <select
+          [(ngModel)]="selectedProjectId"
+          (change)="onProjectFilterChange()"
+          class="form-control project-select">
+          <option value="">Todos os projetos</option>
+          <option *ngFor="let project of projects" [value]="project.id">
+            {{ project.name }}
+          </option>
+        </select>
+        <button
+          *ngIf="selectedProjectId"
+          class="btn btn-secondary btn-small"
+          (click)="clearProjectFilter()"
+          title="Limpar filtro">
+          <i class="icon-x"></i>
+        </button>
+      </div>
+    </div>
     <button class="btn btn-primary" (click)="openCreateTaskModal()">
       <i class="icon-plus"></i>
       Nova Tarefa
@@ -17,7 +37,7 @@
   <!-- Kanban Board -->
   <div *ngIf="!loading" class="kanban-board">
     <div
-      *ngFor="let column of columns; trackBy: trackByColumnId"
+      *ngFor="let column of columns; let i = index; trackBy: trackByColumnId"
       class="kanban-column"
     >
       <!-- Column Header -->
@@ -30,10 +50,19 @@
       </div>
 
       <!-- Tasks -->
-      <div class="tasks-container">
+      <div
+        class="tasks-container"
+        cdkDropList
+        [id]="'column-' + i"
+        [cdkDropListData]="column.tasks"
+        [cdkDropListConnectedTo]="getConnectedDropLists()"
+        (cdkDropListDropped)="onDrop($event)"
+      >
         <div
           *ngFor="let task of column.tasks; trackBy: trackByTaskId"
           class="task-card card card-interactive"
+          cdkDrag
+          [cdkDragData]="task"
           (click)="openTaskDetail(task)"
           [style.border-left]="'4px solid ' + getPriorityColor(task.priority)"
         >

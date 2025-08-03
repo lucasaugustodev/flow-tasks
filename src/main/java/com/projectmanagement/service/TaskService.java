@@ -3,10 +3,13 @@ package com.projectmanagement.service;
 import com.projectmanagement.model.Task;
 import com.projectmanagement.model.TaskStatus;
 import com.projectmanagement.model.User;
+import com.projectmanagement.model.Project;
 import com.projectmanagement.repository.TaskRepository;
+import com.projectmanagement.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,8 +19,24 @@ public class TaskService {
     @Autowired
     private TaskRepository taskRepository;
 
+    @Autowired
+    private ProjectService projectService;
+
     public List<Task> getAllTasks() {
         return taskRepository.findAll();
+    }
+
+    public List<Task> getTasksByUserProjects(Long userId) {
+        // Get all projects that the user has access to
+        List<Project> userProjects = projectService.getProjectsByUser(userId);
+
+        // Get all tasks from those projects
+        List<Task> tasks = new ArrayList<>();
+        for (Project project : userProjects) {
+            tasks.addAll(taskRepository.findByProjectId(project.getId()));
+        }
+
+        return tasks;
     }
 
     public Optional<Task> getTaskById(Long id) {
