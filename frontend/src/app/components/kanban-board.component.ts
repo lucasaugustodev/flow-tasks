@@ -70,7 +70,9 @@ export class KanbanBoardComponent implements OnInit, OnDestroy {
     title: '',
     description: '',
     priority: TaskPriority.MEDIUM,
-    project: { id: 0 }
+    status: TaskStatus.BACKLOG,
+    projectId: 0,
+    assignedUserId: null
   };
 
   constructor(private apiService: ApiService) {}
@@ -189,9 +191,10 @@ export class KanbanBoardComponent implements OnInit, OnDestroy {
       title: '',
       description: '',
       priority: TaskPriority.MEDIUM,
-      project: { id: 0 },
+      status: TaskStatus.BACKLOG,
+      projectId: 0,
       dueDate: '',
-      assignedUserId: undefined
+      assignedUserId: null
     };
     console.log('Reset form data:', this.newTask);
     console.log('Available projects:', this.projects);
@@ -209,7 +212,7 @@ export class KanbanBoardComponent implements OnInit, OnDestroy {
     if (!this.isCreateTaskFormValid()) {
       console.error('Form validation failed:', {
         title: this.newTask.title,
-        projectId: this.newTask.project.id,
+        projectId: this.newTask.projectId,
         isValid: this.isCreateTaskFormValid()
       });
       return;
@@ -220,7 +223,8 @@ export class KanbanBoardComponent implements OnInit, OnDestroy {
       title: this.newTask.title.trim(),
       description: this.newTask.description?.trim() || '',
       priority: this.newTask.priority,
-      project: { id: Number(this.newTask.project.id) },
+      status: TaskStatus.BACKLOG,
+      projectId: Number(this.newTask.projectId),
       dueDate: this.newTask.dueDate && this.newTask.dueDate.trim() ? this.newTask.dueDate : undefined,
       assignedUserId: this.newTask.assignedUserId && this.newTask.assignedUserId > 0 ? this.newTask.assignedUserId : undefined
     };
@@ -309,15 +313,15 @@ export class KanbanBoardComponent implements OnInit, OnDestroy {
 
   isCreateTaskFormValid(): boolean {
     const isValid = this.newTask.title.trim().length > 0 &&
-                   this.newTask.project.id > 0 &&
+                   this.newTask.projectId > 0 &&
                    this.newTask.priority !== null &&
                    this.newTask.priority !== undefined;
 
     console.log('Form validation:', {
       title: this.newTask.title,
       titleValid: this.newTask.title.trim().length > 0,
-      projectId: this.newTask.project.id,
-      projectValid: this.newTask.project.id > 0,
+      projectId: this.newTask.projectId,
+      projectValid: this.newTask.projectId > 0,
       priority: this.newTask.priority,
       priorityValid: this.newTask.priority !== null && this.newTask.priority !== undefined,
       overallValid: isValid

@@ -81,9 +81,10 @@ export interface CreateTaskRequest {
   title: string;
   description?: string;
   priority: TaskPriority;
+  status: TaskStatus;
+  projectId: number;
+  assignedUserId?: number | null;
   dueDate?: string;
-  project: { id: number };
-  assignedUserId?: number;
 }
 
 export interface UpdateTaskStatusRequest {

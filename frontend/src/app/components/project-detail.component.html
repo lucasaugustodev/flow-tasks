@@ -145,7 +145,7 @@
         <div class="tasks-section">
           <div class="section-header">
             <h3 class="h3">Tarefas do Projeto</h3>
-            <button class="btn btn-primary btn-small">
+            <button class="btn btn-primary btn-small" (click)="openCreateTaskModal()">
               <i class="icon-plus"></i>
               Nova Tarefa
             </button>
@@ -155,7 +155,7 @@
             <i class="icon-tasks empty-icon"></i>
             <h4 class="h3">Nenhuma tarefa encontrada</h4>
             <p class="body text-secondary">Este projeto ainda não possui tarefas.</p>
-            <button class="btn btn-primary">
+            <button class="btn btn-primary" (click)="openCreateTaskModal()">
               <i class="icon-plus"></i>
               Criar Primeira Tarefa
             </button>
@@ -197,6 +197,12 @@
                     Criado: {{ formatDate(task.createdAt) }}
                   </span>
                 </div>
+
+                <div class="task-actions">
+                  <button class="btn btn-secondary btn-small" (click)="deleteTask(task.id)">
+                    <i class="icon-trash"></i>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -208,7 +214,7 @@
         <div class="access-section">
           <div class="section-header">
             <h3 class="h3">Usuários com Acesso</h3>
-            <button class="btn btn-primary btn-small">
+            <button class="btn btn-primary btn-small" (click)="openAddUserModal()">
               <i class="icon-plus"></i>
               Adicionar Usuário
             </button>
@@ -244,7 +250,7 @@
         <div class="meetings-section">
           <div class="section-header">
             <h3 class="h3">Atas de Reunião</h3>
-            <button class="btn btn-primary btn-small">
+            <button class="btn btn-primary btn-small" (click)="openCreateMeetingModal()">
               <i class="icon-plus"></i>
               Nova Ata
             </button>
@@ -297,5 +303,190 @@
     <button class="btn btn-primary" (click)="goBack()">
       Voltar para Projetos
     </button>
+  </div>
+
+  <!-- Create Task Modal -->
+  <div *ngIf="isCreateTaskModalOpen" class="modal-overlay" (click)="closeCreateTaskModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="h3">Nova Tarefa</h3>
+        <button class="btn btn-secondary btn-small" (click)="closeCreateTaskModal()">
+          <i class="icon-close"></i>
+        </button>
+      </div>
+
+      <form (ngSubmit)="createTask()" class="modal-form">
+        <div class="form-group">
+          <label for="taskTitle">Título *</label>
+          <input
+            type="text"
+            id="taskTitle"
+            [(ngModel)]="newTask.title"
+            name="taskTitle"
+            class="form-control"
+            placeholder="Digite o título da tarefa"
+            required>
+        </div>
+
+        <div class="form-group">
+          <label for="taskDescription">Descrição</label>
+          <textarea
+            id="taskDescription"
+            [(ngModel)]="newTask.description"
+            name="taskDescription"
+            class="form-control"
+            rows="3"
+            placeholder="Digite a descrição da tarefa"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="taskPriority">Prioridade</label>
+            <select
+              id="taskPriority"
+              [(ngModel)]="newTask.priority"
+              name="taskPriority"
+              class="form-control">
+              <option value="LOW">Baixa</option>
+              <option value="MEDIUM">Média</option>
+              <option value="HIGH">Alta</option>
+              <option value="URGENT">Urgente</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="taskAssignee">Responsável</label>
+            <select
+              id="taskAssignee"
+              [(ngModel)]="newTask.assignedUserId"
+              name="taskAssignee"
+              class="form-control">
+              <option [value]="null">Não atribuído</option>
+              <option *ngFor="let user of getProjectAccessUsers()" [value]="user.id">
+                {{ user.fullName }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="taskDueDate">Data de Vencimento</label>
+          <input
+            type="date"
+            id="taskDueDate"
+            [(ngModel)]="newTask.dueDate"
+            name="taskDueDate"
+            class="form-control">
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeCreateTaskModal()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="!newTask.title.trim()">
+            Criar Tarefa
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Create Meeting Modal -->
+  <div *ngIf="isCreateMeetingModalOpen" class="modal-overlay" (click)="closeCreateMeetingModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="h3">Nova Ata de Reunião</h3>
+        <button class="btn btn-secondary btn-small" (click)="closeCreateMeetingModal()">
+          <i class="icon-close"></i>
+        </button>
+      </div>
+
+      <form (ngSubmit)="createMeeting()" class="modal-form">
+        <div class="form-group">
+          <label for="meetingTitle">Título *</label>
+          <input
+            type="text"
+            id="meetingTitle"
+            [(ngModel)]="newMeeting.title"
+            name="meetingTitle"
+            class="form-control"
+            placeholder="Digite o título da reunião"
+            required>
+        </div>
+
+        <div class="form-group">
+          <label for="meetingDate">Data da Reunião</label>
+          <input
+            type="datetime-local"
+            id="meetingDate"
+            [(ngModel)]="newMeeting.meetingDate"
+            name="meetingDate"
+            class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label for="meetingSummary">Resumo</label>
+          <textarea
+            id="meetingSummary"
+            [(ngModel)]="newMeeting.summary"
+            name="meetingSummary"
+            class="form-control"
+            rows="4"
+            placeholder="Digite o resumo da reunião"></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeCreateMeetingModal()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="!newMeeting.title.trim()">
+            Criar Ata
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add User Modal -->
+  <div *ngIf="isAddUserModalOpen" class="modal-overlay" (click)="closeAddUserModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="h3">Adicionar Usuários ao Projeto</h3>
+        <button class="btn btn-secondary btn-small" (click)="closeAddUserModal()">
+          <i class="icon-close"></i>
+        </button>
+      </div>
+
+      <div class="modal-form">
+        <div class="users-selection">
+          <div *ngFor="let user of getUsersNotInProject()" class="user-checkbox">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [checked]="isUserSelected(user.id)"
+                (change)="toggleUserSelection(user.id)">
+              <span class="checkmark"></span>
+              <div class="user-info">
+                <span class="user-name">{{ user.fullName }}</span>
+                <span class="user-email">{{ user.email }}</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeAddUserModal()">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="addUsersToProject()"
+            [disabled]="selectedUsersToAdd.length === 0">
+            Adicionar {{ selectedUsersToAdd.length }} Usuário(s)
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

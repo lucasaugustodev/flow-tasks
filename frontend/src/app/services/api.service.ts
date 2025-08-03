@@ -141,8 +141,9 @@ export class ApiService {
       title: taskRequest.title,
       description: taskRequest.description || '',
       priority: taskRequest.priority,
+      status: taskRequest.status,
       dueDate: taskRequest.dueDate ? new Date(taskRequest.dueDate + 'T23:59:59').toISOString() : null,
-      project: { id: taskRequest.project.id },
+      project: { id: taskRequest.projectId },
       assignedUser: taskRequest.assignedUserId ? { id: taskRequest.assignedUserId } : null
     };
 

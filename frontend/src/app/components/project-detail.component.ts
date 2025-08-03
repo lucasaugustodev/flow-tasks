@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { ApiService } from '../services/api.service';
-import { Project, Task, User, TaskStatus, TaskPriority } from '../models/task.model';
+import { Project, Task, User, TaskStatus, TaskPriority, CreateTaskRequest } from '../models/task.model';
 
 @Component({
   selector: 'app-project-detail',
@@ -15,8 +15,36 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   project: Project | null = null;
   projectTasks: Task[] = [];
   projectUsers: User[] = [];
+  allUsers: User[] = [];
   loading = false;
   activeTab: 'tasks' | 'access' | 'meetings' = 'tasks';
+
+  // Modal states
+  isCreateTaskModalOpen = false;
+  isCreateMeetingModalOpen = false;
+  isAddUserModalOpen = false;
+
+  // Forms
+  newTask: CreateTaskRequest = {
+    title: '',
+    description: '',
+    priority: TaskPriority.MEDIUM,
+    status: TaskStatus.BACKLOG,
+    projectId: 0,
+    assignedUserId: null,
+    dueDate: ''
+  };
+
+  newMeeting = {
+    title: '',
+    summary: '',
+    meetingDate: '',
+    participants: [] as string[],
+    decisions: [] as string[],
+    nextActions: [] as string[]
+  };
+
+  selectedUsersToAdd: number[] = [];
   
   // Meeting minutes data (mock for now)
   meetingMinutes = [
@@ -251,12 +279,12 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   // Get users who have access to this project (users with tasks assigned)
   getProjectAccessUsers(): User[] {
     const userIds = new Set<number>();
-    
+
     // Add project creator
     if (this.project?.createdBy) {
       userIds.add(this.project.createdBy.id);
     }
-    
+
     // Add users with assigned tasks
     this.projectTasks.forEach(task => {
       if (task.assignedUser) {
@@ -268,5 +296,131 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     });
 
     return this.projectUsers.filter(user => userIds.has(user.id));
+  }
+
+  // Task Management
+  openCreateTaskModal(): void {
+    this.newTask = {
+      title: '',
+      description: '',
+      priority: TaskPriority.MEDIUM,
+      status: TaskStatus.BACKLOG,
+      projectId: this.project?.id || 0,
+      assignedUserId: null,
+      dueDate: ''
+    };
+    this.isCreateTaskModalOpen = true;
+  }
+
+  closeCreateTaskModal(): void {
+    this.isCreateTaskModalOpen = false;
+  }
+
+  createTask(): void {
+    if (!this.newTask.title.trim()) {
+      return;
+    }
+
+    this.newTask.projectId = this.project?.id || 0;
+
+    this.apiService.createTask(this.newTask)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (task) => {
+          this.projectTasks.push(task);
+          this.calculateTaskStats();
+          this.closeCreateTaskModal();
+        },
+        error: (error) => {
+          console.error('Error creating task:', error);
+          alert('Erro ao criar tarefa: ' + (error.error?.message || error.message));
+        }
+      });
+  }
+
+  deleteTask(taskId: number): void {
+    if (!confirm('Tem certeza que deseja excluir esta tarefa?')) {
+      return;
+    }
+
+    this.apiService.deleteTask(taskId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.projectTasks = this.projectTasks.filter(t => t.id !== taskId);
+          this.calculateTaskStats();
+        },
+        error: (error) => {
+          console.error('Error deleting task:', error);
+          alert('Erro ao excluir tarefa: ' + (error.error?.message || error.message));
+        }
+      });
+  }
+
+  // Meeting Management
+  openCreateMeetingModal(): void {
+    this.newMeeting = {
+      title: '',
+      summary: '',
+      meetingDate: '',
+      participants: [],
+      decisions: [],
+      nextActions: []
+    };
+    this.isCreateMeetingModalOpen = true;
+  }
+
+  closeCreateMeetingModal(): void {
+    this.isCreateMeetingModalOpen = false;
+  }
+
+  createMeeting(): void {
+    if (!this.newMeeting.title.trim()) {
+      return;
+    }
+
+    // TODO: Implement meeting creation API call
+    console.log('Creating meeting:', this.newMeeting);
+    alert('Funcionalidade de atas de reunião será implementada em breve!');
+    this.closeCreateMeetingModal();
+  }
+
+  // User Access Management
+  openAddUserModal(): void {
+    this.selectedUsersToAdd = [];
+    this.isAddUserModalOpen = true;
+  }
+
+  closeAddUserModal(): void {
+    this.isAddUserModalOpen = false;
+  }
+
+  addUsersToProject(): void {
+    if (this.selectedUsersToAdd.length === 0) {
+      return;
+    }
+
+    // TODO: Implement add users to project API call
+    console.log('Adding users to project:', this.selectedUsersToAdd);
+    alert('Funcionalidade de adicionar usuários será implementada em breve!');
+    this.closeAddUserModal();
+  }
+
+  toggleUserSelection(userId: number): void {
+    const index = this.selectedUsersToAdd.indexOf(userId);
+    if (index > -1) {
+      this.selectedUsersToAdd.splice(index, 1);
+    } else {
+      this.selectedUsersToAdd.push(userId);
+    }
+  }
+
+  isUserSelected(userId: number): boolean {
+    return this.selectedUsersToAdd.includes(userId);
+  }
+
+  getUsersNotInProject(): User[] {
+    const projectUserIds = this.getProjectAccessUsers().map(u => u.id);
+    return this.allUsers.filter(user => !projectUserIds.includes(user.id));
   }
 }
