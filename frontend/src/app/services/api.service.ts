@@ -128,7 +128,7 @@ export class ApiService {
   }
 
   getTasksByProject(projectId: number): Observable<Task[]> {
-    return this.http.get<Task[]>(`${this.baseUrl}/projects/${projectId}/tasks`);
+    return this.http.get<Task[]>(`${this.baseUrl}/tasks/project/${projectId}`);
   }
 
   getTask(id: number): Observable<Task> {
