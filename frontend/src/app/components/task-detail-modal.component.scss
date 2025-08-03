@@ -30,6 +30,12 @@
   border-bottom: 1px solid var(--color-surface);
 }
 
+.modal-actions {
+  display: flex;
+  gap: var(--spacing-small);
+  align-items: center;
+}
+
 .task-header-info {
   flex: 1;
 }

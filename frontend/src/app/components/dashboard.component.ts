@@ -160,21 +160,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  getStatusLabel(status: TaskStatus): string {
-    switch (status) {
-      case TaskStatus.BACKLOG:
-        return 'Backlog';
-      case TaskStatus.READY_TO_DEVELOP:
-        return 'Pronto';
-      case TaskStatus.IN_PROGRESS:
-        return 'Em Progresso';
-      case TaskStatus.IN_REVIEW:
-        return 'Em Revisão';
-      case TaskStatus.DONE:
-        return 'Concluído';
-      default:
-        return status;
-    }
+  getStatusLabel(status: string): string {
+    return status; // Now status is already the display name
   }
 
   formatDate(dateString: string): string {

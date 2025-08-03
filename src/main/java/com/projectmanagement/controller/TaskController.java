@@ -1,7 +1,6 @@
 package com.projectmanagement.controller;
 
 import com.projectmanagement.model.Task;
-import com.projectmanagement.model.TaskStatus;
 import com.projectmanagement.model.User;
 import com.projectmanagement.security.UserPrincipal;
 import com.projectmanagement.service.TaskService;
@@ -149,7 +148,7 @@ public class TaskController {
     }
 
     @PutMapping("/{id}/status")
-    public ResponseEntity<Task> updateTaskStatus(@PathVariable Long id, @RequestParam TaskStatus status,
+    public ResponseEntity<Task> updateTaskStatus(@PathVariable Long id, @RequestParam String status,
                                                Authentication authentication) {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         

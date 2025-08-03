@@ -66,7 +66,7 @@ public class TaskService {
         return taskRepository.save(task);
     }
 
-    public Task updateTaskStatus(Long id, TaskStatus status) {
+    public Task updateTaskStatus(Long id, String status) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Task not found with id: " + id));
 

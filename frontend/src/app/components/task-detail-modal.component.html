@@ -15,9 +15,14 @@
           <span class="status-badge">{{ getStatusLabel(task.status) }}</span>
         </div>
       </div>
-      <button class="btn-close" (click)="closeModal()">
-        <i class="icon-x"></i>
-      </button>
+      <div class="modal-actions">
+        <button class="btn btn-danger btn-small" (click)="deleteTask()" title="Excluir tarefa">
+          <i class="icon-trash"></i>
+        </button>
+        <button class="btn-close" (click)="closeModal()">
+          <i class="icon-x"></i>
+        </button>
+      </div>
     </div>
 
     <!-- Task Info -->

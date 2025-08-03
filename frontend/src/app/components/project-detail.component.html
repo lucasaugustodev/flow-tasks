@@ -162,10 +162,11 @@
           </div>
 
           <div class="tasks-grid" *ngIf="projectTasks.length > 0">
-            <div 
-              *ngFor="let task of projectTasks" 
+            <div
+              *ngFor="let task of projectTasks"
               class="task-card card card-interactive"
               [style.border-left]="'4px solid ' + getPriorityColor(task.priority)"
+              (click)="openTaskDetail(task)"
             >
               <div class="task-header">
                 <h4 class="task-title">{{ task.title }}</h4>
@@ -355,18 +356,31 @@
           </div>
 
           <div class="form-group">
-            <label for="taskAssignee">Responsável</label>
+            <label for="taskStatus">Status Inicial</label>
             <select
-              id="taskAssignee"
-              [(ngModel)]="newTask.assignedUserId"
-              name="taskAssignee"
+              id="taskStatus"
+              [(ngModel)]="newTask.status"
+              name="taskStatus"
               class="form-control">
-              <option [value]="null">Não atribuído</option>
-              <option *ngFor="let user of getProjectAccessUsers()" [value]="user.id">
-                {{ user.fullName }}
+              <option *ngFor="let column of taskColumns" [value]="column.name">
+                {{ column.name }}
               </option>
             </select>
           </div>
+        </div>
+
+        <div class="form-group">
+          <label for="taskAssignee">Responsável</label>
+          <select
+            id="taskAssignee"
+            [(ngModel)]="newTask.assignedUserId"
+            name="taskAssignee"
+            class="form-control">
+            <option [value]="null">Não atribuído</option>
+            <option *ngFor="let user of getProjectAccessUsers()" [value]="user.id">
+              {{ user.fullName }}
+            </option>
+          </select>
         </div>
 
         <div class="form-group">
@@ -489,4 +503,14 @@
       </div>
     </div>
   </div>
+
+  <!-- Task Detail Modal -->
+  <app-task-detail-modal
+    *ngIf="selectedTask"
+    [task]="selectedTask"
+    [users]="allUsers"
+    (close)="closeTaskDetail()"
+    (taskUpdated)="onTaskUpdated($event)"
+    (taskDeleted)="onTaskDeleted($event)">
+  </app-task-detail-modal>
 </div>

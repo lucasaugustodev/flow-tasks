@@ -7,6 +7,7 @@ import {
   User,
   TaskComment,
   TaskChecklistItem,
+  TaskColumn,
   CreateTaskRequest,
   UpdateTaskStatusRequest,
   CreateCommentRequest,
@@ -205,5 +206,22 @@ export class ApiService {
 
   getChecklistStats(taskId: number): Observable<{total: number, completed: number, remaining: number}> {
     return this.http.get<{total: number, completed: number, remaining: number}>(`${this.baseUrl}/tasks/${taskId}/checklist/stats`, { headers: this.getAuthHeaders() });
+  }
+
+  // Task Columns
+  getTaskColumns(projectId: number): Observable<TaskColumn[]> {
+    return this.http.get<TaskColumn[]>(`${this.baseUrl}/projects/${projectId}/columns`);
+  }
+
+  createTaskColumn(projectId: number, column: Partial<TaskColumn>): Observable<TaskColumn> {
+    return this.http.post<TaskColumn>(`${this.baseUrl}/projects/${projectId}/columns`, column);
+  }
+
+  updateTaskColumn(projectId: number, columnId: number, column: Partial<TaskColumn>): Observable<TaskColumn> {
+    return this.http.put<TaskColumn>(`${this.baseUrl}/projects/${projectId}/columns/${columnId}`, column);
+  }
+
+  deleteTaskColumn(projectId: number, columnId: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/projects/${projectId}/columns/${columnId}`);
   }
 }

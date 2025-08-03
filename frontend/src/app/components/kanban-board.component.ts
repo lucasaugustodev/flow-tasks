@@ -22,35 +22,35 @@ export class KanbanBoardComponent implements OnInit, OnDestroy {
   
   columns: KanbanColumn[] = [
     {
-      id: TaskStatus.BACKLOG,
+      id: 'Backlog',
       title: 'Backlog',
       icon: 'inbox',
       color: '#666666',
       tasks: []
     },
     {
-      id: TaskStatus.READY_TO_DEVELOP,
-      title: 'Pronto',
+      id: 'A Fazer',
+      title: 'A Fazer',
       icon: 'play',
       color: '#007AFF',
       tasks: []
     },
     {
-      id: TaskStatus.IN_PROGRESS,
+      id: 'Em Progresso',
       title: 'Em Progresso',
       icon: 'spinner',
       color: '#FFC107',
       tasks: []
     },
     {
-      id: TaskStatus.IN_REVIEW,
+      id: 'Em Revisão',
       title: 'Em Revisão',
       icon: 'eye',
       color: '#6f42c1',
       tasks: []
     },
     {
-      id: TaskStatus.DONE,
+      id: 'Concluído',
       title: 'Concluído',
       icon: 'check',
       color: '#28A745',
@@ -153,7 +153,7 @@ export class KanbanBoardComponent implements OnInit, OnDestroy {
     }
   }
 
-  private updateTaskStatus(task: Task, newStatus: TaskStatus): void {
+  private updateTaskStatus(task: Task, newStatus: string): void {
     this.apiService.updateTaskStatus(task.id, { status: newStatus })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -307,7 +307,7 @@ export class KanbanBoardComponent implements OnInit, OnDestroy {
     return task.id;
   }
 
-  trackByColumnId(index: number, column: KanbanColumn): TaskStatus {
+  trackByColumnId(index: number, column: KanbanColumn): string {
     return column.id;
   }
 

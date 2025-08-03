@@ -23,8 +23,8 @@ public class Task {
     @Size(max = 1000)
     private String description;
 
-    @Enumerated(EnumType.STRING)
-    private TaskStatus status = TaskStatus.BACKLOG;
+    @Size(max = 50)
+    private String status = "BACKLOG";
 
     @Enumerated(EnumType.STRING)
     private TaskPriority priority = TaskPriority.MEDIUM;
@@ -94,8 +94,8 @@ public class Task {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public TaskStatus getStatus() { return status; }
-    public void setStatus(TaskStatus status) { this.status = status; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
     public TaskPriority getPriority() { return priority; }
     public void setPriority(TaskPriority priority) { this.priority = priority; }

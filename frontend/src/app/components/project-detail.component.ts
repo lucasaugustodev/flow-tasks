@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { ApiService } from '../services/api.service';
-import { Project, Task, User, TaskStatus, TaskPriority, CreateTaskRequest } from '../models/task.model';
+import { Project, Task, User, TaskStatus, TaskPriority, CreateTaskRequest, TaskColumn } from '../models/task.model';
 
 @Component({
   selector: 'app-project-detail',
@@ -16,6 +16,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   projectTasks: Task[] = [];
   projectUsers: User[] = [];
   allUsers: User[] = [];
+  taskColumns: TaskColumn[] = [];
   loading = false;
   activeTab: 'tasks' | 'access' | 'meetings' = 'tasks';
 
@@ -23,13 +24,14 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   isCreateTaskModalOpen = false;
   isCreateMeetingModalOpen = false;
   isAddUserModalOpen = false;
+  selectedTask: Task | null = null;
 
   // Forms
   newTask: CreateTaskRequest = {
     title: '',
     description: '',
     priority: TaskPriority.MEDIUM,
-    status: TaskStatus.BACKLOG,
+    status: 'Backlog',
     projectId: 0,
     assignedUserId: null,
     dueDate: ''
@@ -116,20 +118,26 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     forkJoin({
       project: this.apiService.getProject(projectId),
       tasks: this.apiService.getTasksByProject(projectId),
-      users: this.apiService.getUsers()
+      users: this.apiService.getUsers(),
+      columns: this.apiService.getTaskColumns(projectId)
     }).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
-      next: ({ project, tasks, users }) => {
+      next: ({ project, tasks, users, columns }) => {
         this.project = project;
         this.projectTasks = tasks;
+        this.allUsers = users;
         this.projectUsers = users;
+        this.taskColumns = columns;
         this.calculateTaskStats();
         this.loading = false;
       },
       error: (error) => {
         console.error('Error loading project details:', error);
         this.loading = false;
+
+        // Set default columns if API fails
+        this.taskColumns = this.getDefaultColumns();
 
         if (error.status === 404) {
           alert('Projeto não encontrado.');
@@ -146,12 +154,12 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
 
   private calculateTaskStats(): void {
     this.taskStats.total = this.projectTasks.length;
-    this.taskStats.completed = this.projectTasks.filter(t => t.status === TaskStatus.DONE).length;
-    this.taskStats.inProgress = this.projectTasks.filter(t => 
-      t.status === TaskStatus.IN_PROGRESS || t.status === TaskStatus.IN_REVIEW
+    this.taskStats.completed = this.projectTasks.filter(t => t.status === 'Concluído').length;
+    this.taskStats.inProgress = this.projectTasks.filter(t =>
+      t.status === 'Em Progresso' || t.status === 'Em Revisão'
     ).length;
-    this.taskStats.pending = this.projectTasks.filter(t => 
-      t.status === TaskStatus.BACKLOG || t.status === TaskStatus.READY_TO_DEVELOP
+    this.taskStats.pending = this.projectTasks.filter(t =>
+      t.status === 'Backlog' || t.status === 'A Fazer'
     ).length;
   }
 
@@ -227,21 +235,8 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  getTaskStatusLabel(status: TaskStatus): string {
-    switch (status) {
-      case TaskStatus.BACKLOG:
-        return 'Backlog';
-      case TaskStatus.READY_TO_DEVELOP:
-        return 'Pronto';
-      case TaskStatus.IN_PROGRESS:
-        return 'Em Progresso';
-      case TaskStatus.IN_REVIEW:
-        return 'Em Revisão';
-      case TaskStatus.DONE:
-        return 'Concluído';
-      default:
-        return status;
-    }
+  getTaskStatusLabel(status: string): string {
+    return status; // Now status is already the display name
   }
 
   formatDate(dateString: string): string {
@@ -304,7 +299,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
       title: '',
       description: '',
       priority: TaskPriority.MEDIUM,
-      status: TaskStatus.BACKLOG,
+      status: this.taskColumns.length > 0 ? this.taskColumns[0].name : 'Backlog',
       projectId: this.project?.id || 0,
       assignedUserId: null,
       dueDate: ''
@@ -422,5 +417,98 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   getUsersNotInProject(): User[] {
     const projectUserIds = this.getProjectAccessUsers().map(u => u.id);
     return this.allUsers.filter(user => !projectUserIds.includes(user.id));
+  }
+
+  // Task Detail Modal
+  openTaskDetail(task: Task): void {
+    this.selectedTask = task;
+  }
+
+  closeTaskDetail(): void {
+    this.selectedTask = null;
+  }
+
+  onTaskUpdated(updatedTask: Task): void {
+    const index = this.projectTasks.findIndex(t => t.id === updatedTask.id);
+    if (index > -1) {
+      this.projectTasks[index] = updatedTask;
+      this.calculateTaskStats();
+    }
+    // Reload the task details to get updated data
+    if (this.project?.id) {
+      this.loadProjectDetails(this.project.id);
+    }
+  }
+
+  onTaskDeleted(taskId: number): void {
+    this.projectTasks = this.projectTasks.filter(t => t.id !== taskId);
+    this.calculateTaskStats();
+    this.selectedTask = null;
+  }
+
+  // Default columns fallback
+  private getDefaultColumns(): TaskColumn[] {
+    return [
+      {
+        id: 1,
+        name: 'Backlog',
+        description: 'Tarefas em espera',
+        order: 1,
+        color: '#6B7280',
+        isDefault: true,
+        projectId: this.project?.id || 0,
+        projectName: this.project?.name || '',
+        createdById: this.project?.createdBy?.id || 0,
+        createdByName: this.project?.createdBy?.fullName || ''
+      },
+      {
+        id: 2,
+        name: 'A Fazer',
+        description: 'Tarefas prontas para desenvolvimento',
+        order: 2,
+        color: '#3B82F6',
+        isDefault: true,
+        projectId: this.project?.id || 0,
+        projectName: this.project?.name || '',
+        createdById: this.project?.createdBy?.id || 0,
+        createdByName: this.project?.createdBy?.fullName || ''
+      },
+      {
+        id: 3,
+        name: 'Em Progresso',
+        description: 'Tarefas sendo desenvolvidas',
+        order: 3,
+        color: '#F59E0B',
+        isDefault: true,
+        projectId: this.project?.id || 0,
+        projectName: this.project?.name || '',
+        createdById: this.project?.createdBy?.id || 0,
+        createdByName: this.project?.createdBy?.fullName || ''
+      },
+      {
+        id: 4,
+        name: 'Em Revisão',
+        description: 'Tarefas em revisão',
+        order: 4,
+        color: '#8B5CF6',
+        isDefault: true,
+        projectId: this.project?.id || 0,
+        projectName: this.project?.name || '',
+        createdById: this.project?.createdBy?.id || 0,
+        createdByName: this.project?.createdBy?.fullName || ''
+      },
+      {
+        id: 5,
+        name: 'Concluído',
+        description: 'Tarefas finalizadas',
+        order: 5,
+        color: '#10B981',
+        isDefault: true,
+        projectId: this.project?.id || 0,
+        projectName: this.project?.name || '',
+        createdById: this.project?.createdBy?.id || 0,
+        createdByName: this.project?.createdBy?.fullName || ''
+      }
+    ];
   }
 }

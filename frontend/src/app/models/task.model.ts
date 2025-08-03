@@ -23,7 +23,7 @@ export interface Task {
   id: number;
   title: string;
   description?: string;
-  status: TaskStatus;
+  status: string;
   priority: TaskPriority;
   dueDate?: string;
   createdAt: string;
@@ -55,11 +55,11 @@ export interface TaskChecklistItem {
 }
 
 export enum TaskStatus {
-  BACKLOG = 'BACKLOG',
-  READY_TO_DEVELOP = 'READY_TO_DEVELOP',
-  IN_PROGRESS = 'IN_PROGRESS',
-  IN_REVIEW = 'IN_REVIEW',
-  DONE = 'DONE'
+  BACKLOG = 'Backlog',
+  TODO = 'A Fazer',
+  IN_PROGRESS = 'Em Progresso',
+  IN_REVIEW = 'Em Revisão',
+  DONE = 'Concluído'
 }
 
 export enum TaskPriority {
@@ -81,14 +81,14 @@ export interface CreateTaskRequest {
   title: string;
   description?: string;
   priority: TaskPriority;
-  status: TaskStatus;
+  status: string;
   projectId: number;
   assignedUserId?: number | null;
   dueDate?: string;
 }
 
 export interface UpdateTaskStatusRequest {
-  status: TaskStatus;
+  status: string;
 }
 
 export interface CreateCommentRequest {
@@ -124,9 +124,22 @@ export interface MessageResponse {
   message: string;
 }
 
+export interface TaskColumn {
+  id: number;
+  name: string;
+  description?: string;
+  order: number;
+  color: string;
+  isDefault: boolean;
+  projectId: number;
+  projectName: string;
+  createdById: number;
+  createdByName: string;
+}
+
 // Kanban Column Configuration
 export interface KanbanColumn {
-  id: TaskStatus;
+  id: string;
   title: string;
   icon: string;
   color: string;
@@ -136,8 +149,8 @@ export interface KanbanColumn {
 // Drag and Drop Interfaces
 export interface DragDropData {
   taskId: number;
-  sourceColumnId: TaskStatus;
-  targetColumnId: TaskStatus;
+  sourceColumnId: string;
+  targetColumnId: string;
   sourceIndex: number;
   targetIndex: number;
 }

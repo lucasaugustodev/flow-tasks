@@ -19,7 +19,8 @@ export class TaskDetailModalComponent implements OnInit, OnDestroy {
   @Input() task!: Task;
   @Input() users: User[] = [];
   @Output() close = new EventEmitter<void>();
-  @Output() taskUpdated = new EventEmitter<void>();
+  @Output() taskUpdated = new EventEmitter<Task>();
+  @Output() taskDeleted = new EventEmitter<number>();
 
   private destroy$ = new Subject<void>();
   
@@ -73,6 +74,28 @@ export class TaskDetailModalComponent implements OnInit, OnDestroy {
 
   closeModal(): void {
     this.close.emit();
+  }
+
+  deleteTask(): void {
+    if (!confirm('Tem certeza que deseja excluir esta tarefa?')) {
+      return;
+    }
+
+    this.loading = true;
+    this.apiService.deleteTask(this.task.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.loading = false;
+          this.taskDeleted.emit(this.task.id);
+          this.closeModal();
+        },
+        error: (error) => {
+          console.error('Error deleting task:', error);
+          this.loading = false;
+          alert('Erro ao excluir tarefa: ' + (error.error?.message || error.message));
+        }
+      });
   }
 
   setActiveTab(tab: 'comments' | 'checklist'): void {
