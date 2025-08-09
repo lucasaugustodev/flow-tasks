@@ -38,6 +38,12 @@ public class AiChatController {
     public ResponseEntity<Map<String, Object>> chat(@Valid @RequestBody Map<String, Object> req,
                                                     Authentication authentication) {
         UserPrincipal user = (UserPrincipal) authentication.getPrincipal();
+
+        // Verificar se é uma confirmação de ação
+        if (req.containsKey("confirmAction")) {
+            return handleActionConfirmation(req, user);
+        }
+
         String userMessage = String.valueOf(req.getOrDefault("message", ""));
 
         List<Map<String, Object>> messages = new ArrayList<>();
@@ -90,6 +96,22 @@ public class AiChatController {
         System.out.println("Final content: " + finalContent);
         System.out.println("=== FIM RESPOSTA ===");
 
+        // Verificar se a IA está pedindo confirmação
+        if (finalContent.contains("🤔 CONFIRMAR_AÇÃO")) {
+            // Remover o marcador da mensagem
+            finalContent = finalContent.replace("🤔 CONFIRMAR_AÇÃO", "").trim();
+
+            // Criar ação pendente (simplificada por agora)
+            Map<String, Object> pendingAction = new HashMap<>();
+            pendingAction.put("type", "generic_action");
+            pendingAction.put("originalMessage", userMessage);
+            pendingAction.put("messages", messages);
+
+            out.put("message", finalContent + "\n\n⚠️ Esta ação precisa de confirmação. Deseja continuar?");
+            out.put("pendingAction", pendingAction);
+            return ResponseEntity.ok(out);
+        }
+
         // Se não temos conteúdo, fornecer uma resposta padrão
         if (finalContent.isEmpty()) {
             finalContent = "Ação executada com sucesso!";
@@ -105,7 +127,10 @@ public class AiChatController {
                 "Responda em português. Ao criar tarefas/projetos, seja objetivo. " +
                 "IMPORTANTE: Para criar tarefas, SEMPRE pergunte ao usuário em qual projeto criar se ele não especificar. " +
                 "NÃO crie projetos automaticamente. Só crie projetos quando o usuário explicitamente pedir para criar um projeto. " +
-                "Se o usuário pedir para criar uma tarefa sem especificar o projeto, liste os projetos disponíveis e pergunte em qual criar.";
+                "Se o usuário pedir para criar uma tarefa sem especificar o projeto, liste os projetos disponíveis e pergunte em qual criar. " +
+                "\n\nMODO CONFIRMAÇÃO: Para ações que modificam dados (move_task, create_task, create_project), " +
+                "PRIMEIRO descreva exatamente o que vai fazer e termine sua resposta com '🤔 CONFIRMAR_AÇÃO'. " +
+                "NÃO execute a ferramenta ainda. Aguarde confirmação do usuário antes de executar.";
         return roleMsg("system", content);
     }
 
@@ -114,6 +139,43 @@ public class AiChatController {
         m.put("role", role);
         m.put("content", content);
         return m;
+    }
+
+    private String extractProjectName(String message) {
+        // Extrair nome do projeto de mensagens como "crie um projeto novo chamada projeto novo"
+        String lowerMessage = message.toLowerCase();
+
+        // Padrões comuns
+        if (lowerMessage.contains("chamad")) {
+            String[] parts = message.split("(?i)chamad[oa]s?\\s+");
+            if (parts.length > 1) {
+                return parts[1].trim().replaceAll("\"", "");
+            }
+        }
+
+        if (lowerMessage.contains("nome")) {
+            String[] parts = message.split("(?i)nome\\s+");
+            if (parts.length > 1) {
+                return parts[1].trim().replaceAll("\"", "");
+            }
+        }
+
+        // Fallback: pegar últimas palavras após "projeto"
+        String[] words = message.split("\\s+");
+        boolean foundProjeto = false;
+        StringBuilder projectName = new StringBuilder();
+
+        for (String word : words) {
+            if (foundProjeto) {
+                projectName.append(word).append(" ");
+            }
+            if (word.toLowerCase().contains("projeto")) {
+                foundProjeto = true;
+            }
+        }
+
+        String result = projectName.toString().trim();
+        return result.isEmpty() ? "Novo Projeto" : result;
     }
 
     // OpenAI tools schema
@@ -356,6 +418,102 @@ public class AiChatController {
             return mapper.writeValueAsString(Map.of("error", msg));
         } catch (JsonProcessingException e) {
             return "{\"error\":\"" + msg + "\"}";
+        }
+    }
+
+    private ResponseEntity<Map<String, Object>> handleActionConfirmation(Map<String, Object> req, UserPrincipal user) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> pendingAction = (Map<String, Object>) req.get("confirmAction");
+        Boolean approved = (Boolean) req.get("approved");
+
+        Map<String, Object> out = new HashMap<>();
+
+        if (!approved) {
+            out.put("message", "❌ Ação cancelada pelo usuário.");
+            return ResponseEntity.ok(out);
+        }
+
+        // Executar a ação confirmada
+        try {
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> originalMessages = (List<Map<String, Object>>) pendingAction.get("messages");
+
+            System.out.println("=== CONFIRMAÇÃO DEBUG ===");
+            System.out.println("Pending action: " + pendingAction);
+            System.out.println("Original messages size: " + (originalMessages != null ? originalMessages.size() : "null"));
+
+            // Adicionar mensagem de confirmação
+            originalMessages.add(roleMsg("user", "✅ Confirmado! Execute a ação."));
+
+            // FORÇAR execução da ferramenta baseada na mensagem original
+            String originalMessage = String.valueOf(pendingAction.get("originalMessage"));
+            System.out.println("Mensagem original: " + originalMessage);
+
+            // Detectar e executar a ação diretamente
+            if (originalMessage.toLowerCase().contains("crie") && originalMessage.toLowerCase().contains("projeto")) {
+                // Extrair nome do projeto da mensagem original
+                String projectName = extractProjectName(originalMessage);
+                System.out.println("Nome extraído: " + projectName);
+                System.out.println("Executando create_project com nome: " + projectName);
+
+                // Executar a ferramenta diretamente
+                String result = executeTool("create_project", "{\"name\":\"" + projectName + "\"}", user);
+                System.out.println("Resultado da ferramenta: " + result);
+
+                // Em vez de adicionar mensagem tool, adicionar como resposta do usuário
+                originalMessages.add(roleMsg("user", "Ferramenta executada com sucesso. Resultado: " + result));
+
+                // Adicionar prompt para resposta final
+                originalMessages.add(roleMsg("system", "A ferramenta foi executada. Responda ao usuário confirmando que a ação foi realizada com sucesso."));
+            } else {
+                System.out.println("Não detectou criação de projeto, usando fallback");
+                // Fallback para o prompt original
+                String executionPrompt = "O usuário confirmou a ação. AGORA VOCÊ DEVE EXECUTAR A FERRAMENTA IMEDIATAMENTE. " +
+                        "Use a ferramenta apropriada (create_project, create_task, move_task) para realizar a ação que foi confirmada. " +
+                        "NÃO responda com texto - EXECUTE A FERRAMENTA AGORA.";
+                originalMessages.add(roleMsg("system", executionPrompt));
+            }
+
+            List<Map<String, Object>> tools = buildToolsSchema();
+            Map<String, Object> response = openRouterClient.chatCompletion(originalMessages, tools, "anthropic/claude-sonnet-4");
+
+            // Loop de execução de tools
+            for (int i = 0; i < 5; i++) {
+                Map<String, Object> assistantMsg = extractMessage(response);
+                if (assistantMsg == null) break;
+
+                originalMessages.add(assistantMsg);
+                List<Map<String, Object>> toolCalls = extractToolCalls(assistantMsg);
+                if (toolCalls == null || toolCalls.isEmpty()) {
+                    break; // final answer
+                }
+
+                // Execute tools
+                for (Map<String, Object> toolCall : toolCalls) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> fn = (Map<String, Object>) toolCall.get("function");
+                    String name = String.valueOf(fn.get("name"));
+                    String argsJson = String.valueOf(fn.get("arguments"));
+                    String result = executeTool(name, argsJson, user);
+                    originalMessages.add(roleMsg("tool", result));
+                }
+
+                response = openRouterClient.chatCompletion(originalMessages, tools, "anthropic/claude-sonnet-4");
+            }
+
+            Map<String, Object> finalMsg = extractMessage(response);
+            String finalContent = "";
+            if (finalMsg != null) {
+                Object content = finalMsg.get("content");
+                finalContent = content != null ? String.valueOf(content) : "✅ Ação executada com sucesso!";
+            }
+
+            out.put("message", finalContent);
+            return ResponseEntity.ok(out);
+
+        } catch (Exception e) {
+            out.put("message", "❌ Erro ao executar ação: " + e.getMessage());
+            return ResponseEntity.ok(out);
         }
     }
 }

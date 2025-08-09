@@ -6,6 +6,20 @@
   <div class="chat-window">
     <div class="msg" *ngFor="let m of messages" [class.user]="m.role==='user'" [class.assistant]="m.role==='assistant'">
       <div class="bubble">{{ m.content }}</div>
+
+      <!-- Botões de confirmação -->
+      <div *ngIf="m.showConfirmation" class="confirmation-buttons">
+        <button class="confirm-btn approve" (click)="confirmAction(m, true)">
+          ✅ Confirmar
+        </button>
+        <button class="confirm-btn reject" (click)="confirmAction(m, false)">
+          ❌ Cancelar
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="msg assistant">
+      <div class="bubble">Digitando...</div>
     </div>
   </div>
   <div class="composer">

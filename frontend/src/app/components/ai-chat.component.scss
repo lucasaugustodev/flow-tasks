@@ -120,3 +120,44 @@
   cursor: not-allowed;
 }
 
+/* Botões de confirmação */
+.confirmation-buttons {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.confirm-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.confirm-btn.approve {
+  background: #10b981;
+  color: white;
+}
+
+.confirm-btn.approve:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.confirm-btn.reject {
+  background: #ef4444;
+  color: white;
+}
+
+.confirm-btn.reject:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
