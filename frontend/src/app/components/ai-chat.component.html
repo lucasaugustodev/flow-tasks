@@ -1,5 +1,8 @@
-<app-header></app-header>
 <div class="ai-chat">
+  <div class="chat-header">
+    <h2>Chat com IA - Assistente de Projetos</h2>
+    <p>Posso criar tarefas, mover no Kanban e gerenciar projetos para você</p>
+  </div>
   <div class="chat-window">
     <div class="msg" *ngFor="let m of messages" [class.user]="m.role==='user'" [class.assistant]="m.role==='assistant'">
       <div class="bubble">{{ m.content }}</div>

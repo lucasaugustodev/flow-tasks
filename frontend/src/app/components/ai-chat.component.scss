@@ -1,13 +1,122 @@
-.ai-chat { max-width: 900px; margin: 24px auto; padding: 0 16px; }
-.chat-window { height: 60vh; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; overflow: auto; background: #fafafa; }
-.msg { display: flex; margin: 8px 0; }
-.msg.user { justify-content: flex-end; }
-.msg.assistant { justify-content: flex-start; }
-.bubble { max-width: 70%; padding: 8px 12px; border-radius: 12px; }
-.msg.user .bubble { background: #007aff; color: white; border-bottom-right-radius: 4px; }
-.msg.assistant .bubble { background: white; border: 1px solid #e0e0e0; border-bottom-left-radius: 4px; }
-.composer { display: flex; gap: 8px; margin-top: 12px; }
-.composer input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; }
-.composer button { padding: 8px 16px; border: none; background: #28a745; color: white; border-radius: 6px; cursor: pointer; }
-.composer button[disabled] { opacity: .6; cursor: default; }
+.ai-chat {
+  max-width: 900px;
+  margin: 24px auto;
+  padding: 0 16px;
+  min-height: calc(100vh - 100px);
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-header {
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+}
+
+.chat-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.5rem;
+}
+
+.chat-header p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 0.9rem;
+}
+
+.chat-window {
+  flex: 1;
+  height: 60vh;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  overflow-y: auto;
+  background: #f8f9fa;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.msg {
+  display: flex;
+  margin: 12px 0;
+  align-items: flex-end;
+}
+
+.msg.user {
+  justify-content: flex-end;
+}
+
+.msg.assistant {
+  justify-content: flex-start;
+}
+
+.bubble {
+  max-width: 70%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.msg.user .bubble {
+  background: #007aff;
+  color: white;
+  border-bottom-right-radius: 6px;
+}
+
+.msg.assistant .bubble {
+  background: white;
+  color: #333;
+  border: 1px solid #e0e0e0;
+  border-bottom-left-radius: 6px;
+}
+
+.composer {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.composer input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #ddd;
+  border-radius: 24px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.composer input:focus {
+  border-color: #007aff;
+}
+
+.composer button {
+  padding: 12px 24px;
+  border: none;
+  background: #007aff;
+  color: white;
+  border-radius: 24px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.composer button:hover:not([disabled]) {
+  background: #0056b3;
+}
+
+.composer button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
