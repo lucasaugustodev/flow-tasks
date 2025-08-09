@@ -3,7 +3,6 @@
 echo "=== Building Frontend ==="
 
 # Set environment
-export NODE_ENV=production
 
 # Navigate to frontend directory
 cd frontend || exit 1

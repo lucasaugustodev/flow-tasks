@@ -2,11 +2,13 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--color-surface);
+  background-color: var(--color-background);
+  color: var(--color-text-dark);
 }
 
 .main-content {
   flex: 1;
+  padding: var(--spacing-large);
 
   &.with-header {
     min-height: calc(100vh - 64px);

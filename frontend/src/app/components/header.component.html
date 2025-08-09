@@ -1,45 +1,33 @@
-<header class="app-header">
-  <div class="header-container">
-    <!-- Logo and Brand -->
-    <div class="brand-section">
-      <div class="logo">
-        <i class="icon-folder"></i>
-      </div>
-      <h2 class="brand-title">Project Management</h2>
+<header class="topbar">
+  <div class="topbar-left">
+    <div class="logo-box">
+      <span class="logo-text">PT</span>
+    </div>
+    <div class="brand">
+      <h1>Painel de Projetos</h1>
+      <p class="caption">Visão geral — organizar, priorizar e executar</p>
+    </div>
+  </div>
+
+  <div class="topbar-right">
+    <!-- Search -->
+    <div class="search">
+      <input aria-label="Pesquisar" placeholder="Pesquisar tarefas, projetos..." />
+      <button class="icon-btn" aria-label="Buscar">
+        <i class="fa fa-search"></i>
+      </button>
     </div>
 
-    <!-- Navigation -->
-    <nav class="main-nav">
-      <a 
-        routerLink="/dashboard" 
-        class="nav-link"
-        [class.active]="isActiveRoute('/dashboard')"
-      >
-        <i class="icon-home"></i>
-        Dashboard
-      </a>
-      <a 
-        routerLink="/projects" 
-        class="nav-link"
-        [class.active]="isActiveRoute('/projects')"
-      >
-        <i class="icon-folder"></i>
-        Projetos
-      </a>
-      <a 
-        routerLink="/kanban" 
-        class="nav-link"
-        [class.active]="isActiveRoute('/kanban')"
-      >
-        <i class="icon-tasks"></i>
-        Kanban
-      </a>
-    </nav>
+    <!-- Quick action -->
+    <a routerLink="/kanban" class="btn btn-secondary btn-small">
+      <i class="icon-plus"></i>
+      Nova tarefa
+    </a>
 
     <!-- User Menu -->
     <div class="user-section">
       <div class="user-menu" (clickOutside)="closeUserMenu()">
-        <button 
+        <button
           class="user-button"
           (click)="toggleUserMenu()"
           [class.active]="isUserMenuOpen"
@@ -70,15 +58,23 @@
           <div class="dropdown-divider"></div>
 
           <div class="dropdown-menu">
-            <button class="dropdown-item" (click)="navigateTo('/profile')">
-              <i class="icon-user"></i>
-              Meu Perfil
+            <button class="dropdown-item" (click)="navigateTo('/dashboard')">
+              <i class="icon-home"></i>
+              Dashboard
             </button>
+            <button class="dropdown-item" (click)="navigateTo('/projects')">
+              <i class="icon-folder"></i>
+              Projetos
+            </button>
+            <button class="dropdown-item" (click)="navigateTo('/kanban')">
+              <i class="icon-tasks"></i>
+              Kanban
+            </button>
+            <div class="dropdown-divider"></div>
             <button class="dropdown-item" (click)="navigateTo('/settings')">
               <i class="icon-settings"></i>
               Configurações
             </button>
-            <div class="dropdown-divider"></div>
             <button class="dropdown-item logout" (click)="logout()">
               <i class="icon-logout"></i>
               Sair

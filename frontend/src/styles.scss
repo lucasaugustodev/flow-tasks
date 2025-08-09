@@ -1,22 +1,22 @@
 // Import Google Fonts
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-// Design System Variables
+// Design System Variables (Dark Theme inspired by the provided design)
 :root {
   // Colors
-  --color-primary: #222222;
-  --color-secondary: #666666;
-  --color-accent: #007AFF;
-  --color-background: #FFFFFF;
-  --color-surface: #F7F7F7;
-  --color-text-dark: #222222;
-  --color-text-light: #FFFFFF;
-  --color-success: #28A745;
-  --color-warning: #FFC107;
-  --color-error: #DC3545;
-  
+  --color-primary: #e2e8f0; /* slate-200 */
+  --color-secondary: #94a3b8; /* slate-400 */
+  --color-accent: #22c55e; /* emerald-500 */
+  --color-background: #0f172a; /* slate-900 */
+  --color-surface: #111827; /* near slate-900 with slight lift */
+  --color-text-dark: #e5e7eb; /* slate-200 for general text */
+  --color-text-light: #0b1220; /* dark text on light surfaces if needed */
+  --color-success: #22c55e; /* emerald-500 */
+  --color-warning: #f59e0b; /* amber-500 */
+  --color-error: #ef4444;   /* red-500 */
+
   // Typography
-  --font-family: 'Inter', sans-serif;
+  --font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-size-h1: 32px;
   --font-size-h2: 28px;
   --font-size-h3: 24px;
@@ -31,21 +31,21 @@
   --line-height-h3: 1.4;
   --line-height-body: 1.5;
   --line-height-caption: 1.6;
-  
+
   // Spacing
   --spacing-unit: 8px;
   --spacing-small: 8px;
   --spacing-medium: 16px;
   --spacing-large: 24px;
   --spacing-x-large: 32px;
-  
+
   // Border Radius
-  --border-radius-small: 4px;
-  --border-radius-medium: 8px;
-  
+  --border-radius-small: 6px;
+  --border-radius-medium: 10px;
+
   // Shadows
-  --shadow-card: 0px 2px 4px rgba(0, 0, 0, 0.1);
-  --shadow-elevated: 0px 4px 8px rgba(0, 0, 0, 0.15);
+  --shadow-card: 0 1px 0 rgba(148, 163, 184, 0.08), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-elevated: 0 4px 24px rgba(2, 6, 23, 0.6);
 }
 
 // Global Reset
