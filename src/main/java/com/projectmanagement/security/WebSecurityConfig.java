@@ -72,6 +72,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED).and()
             .authorizeRequests()
                 .antMatchers("/api/auth/**").permitAll()
+                .antMatchers("/api/ai/test").permitAll()
                 .antMatchers("/h2-console/**").permitAll()
                 .antMatchers("/", "/index.html").permitAll()
                 .antMatchers("/login", "/register", "/dashboard", "/projects/**", "/kanban", "/profile", "/settings", "/ai-chat").permitAll()

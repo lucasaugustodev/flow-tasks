@@ -1,0 +1,383 @@
+package com.projectmanagement.service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.projectmanagement.controller.ProjectController;
+import com.projectmanagement.controller.TaskController;
+import com.projectmanagement.model.Project;
+import com.projectmanagement.model.ProjectStatus;
+import com.projectmanagement.model.Task;
+import com.projectmanagement.model.TaskPriority;
+import com.projectmanagement.security.UserPrincipal;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+
+/**
+ * Service MCP (Model Context Protocol) para execução de ferramentas
+ * Faz interface entre o protocolo MCP e os controllers existentes
+ */
+@Service
+public class MCPClient {
+
+    @Autowired
+    private ProjectController projectController;
+
+    @Autowired
+    private TaskController taskController;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    /**
+     * Retorna lista de todas as ferramentas disponíveis com seus schemas
+     */
+    public List<Map<String, Object>> getAvailableTools() {
+        List<Map<String, Object>> tools = new ArrayList<>();
+
+        // create_task
+        tools.add(createToolSchema(
+            "create_task",
+            "Cria uma nova tarefa em um projeto específico",
+            Map.of(
+                "title", Map.of("type", "string", "description", "Título da tarefa"),
+                "projectId", Map.of("type", "integer", "description", "ID do projeto"),
+                "description", Map.of("type", "string", "description", "Descrição da tarefa (opcional)")
+            ),
+            Arrays.asList("title", "projectId")
+        ));
+
+        // create_project
+        tools.add(createToolSchema(
+            "create_project",
+            "Cria um novo projeto",
+            Map.of(
+                "name", Map.of("type", "string", "description", "Nome do projeto"),
+                "description", Map.of("type", "string", "description", "Descrição do projeto (opcional)")
+            ),
+            Arrays.asList("name")
+        ));
+
+        // list_projects
+        tools.add(createToolSchema(
+            "list_projects",
+            "Lista todos os projetos disponíveis para o usuário",
+            Map.of(),
+            Arrays.asList()
+        ));
+
+        // list_tasks
+        tools.add(createToolSchema(
+            "list_tasks",
+            "Lista tarefas de um projeto específico ou todas as tarefas",
+            Map.of(
+                "projectId", Map.of("type", "integer", "description", "ID do projeto (opcional)")
+            ),
+            Arrays.asList()
+        ));
+
+        // update_task
+        tools.add(createToolSchema(
+            "update_task",
+            "Atualiza informações de uma tarefa existente",
+            Map.of(
+                "taskId", Map.of("type", "integer", "description", "ID da tarefa"),
+                "title", Map.of("type", "string", "description", "Novo título (opcional)"),
+                "description", Map.of("type", "string", "description", "Nova descrição (opcional)"),
+                "status", Map.of("type", "string", "description", "Novo status: BACKLOG, IN_PROGRESS, DONE (opcional)")
+            ),
+            Arrays.asList("taskId")
+        ));
+
+        // move_task
+        tools.add(createToolSchema(
+            "move_task",
+            "Move uma tarefa para um novo status",
+            Map.of(
+                "taskId", Map.of("type", "integer", "description", "ID da tarefa"),
+                "status", Map.of("type", "string", "description", "Novo status: BACKLOG, IN_PROGRESS, DONE")
+            ),
+            Arrays.asList("taskId", "status")
+        ));
+
+        return tools;
+    }
+
+    /**
+     * Retorna o schema de uma ferramenta específica
+     */
+    public Map<String, Object> getToolSchema(String toolName) {
+        List<Map<String, Object>> tools = getAvailableTools();
+        return tools.stream()
+            .filter(tool -> toolName.equals(tool.get("name")))
+            .findFirst()
+            .orElse(null);
+    }
+
+    /**
+     * Executa uma ferramenta específica com os argumentos fornecidos
+     */
+    public Map<String, Object> executeTool(String toolName, Map<String, Object> arguments) {
+        return executeTool(toolName, arguments, null);
+    }
+
+    /**
+     * Executa uma ferramenta específica com contexto de usuário
+     */
+    public Map<String, Object> executeTool(String toolName, Map<String, Object> arguments, UserPrincipal user) {
+        try {
+            switch (toolName) {
+                case "create_task":
+                    return executeCreateTask(arguments, user);
+                case "create_project":
+                    return executeCreateProject(arguments, user);
+                case "list_projects":
+                    return executeListProjects(user);
+                case "list_tasks":
+                    return executeListTasks(arguments, user);
+                case "update_task":
+                    return executeUpdateTask(arguments, user);
+                case "move_task":
+                    return executeMoveTask(arguments, user);
+                default:
+                    return createErrorResponse("Ferramenta não encontrada: " + toolName);
+            }
+        } catch (Exception e) {
+            return createErrorResponse("Erro ao executar " + toolName + ": " + e.getMessage());
+        }
+    }
+
+    // Métodos privados para execução de cada ferramenta
+
+    private Map<String, Object> executeCreateTask(Map<String, Object> args, UserPrincipal user) {
+        try {
+            String title = (String) args.get("title");
+            Long projectId = Long.valueOf(String.valueOf(args.get("projectId")));
+            String description = (String) args.getOrDefault("description", "Tarefa criada via IA");
+
+            Task task = new Task();
+            task.setTitle(title);
+            task.setDescription(description);
+            task.setStatus("BACKLOG");
+            task.setPriority(TaskPriority.MEDIUM);
+
+            // Buscar o projeto
+            Project project = new Project();
+            project.setId(projectId);
+            task.setProject(project);
+
+            Authentication auth = createAuthentication(user);
+            ResponseEntity<Task> response = taskController.createTask(task, auth);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                Task createdTask = response.getBody();
+                return Map.of(
+                    "success", true,
+                    "taskId", createdTask.getId(),
+                    "title", title,
+                    "projectId", projectId,
+                    "message", "Tarefa '" + title + "' criada com sucesso!"
+                );
+            } else {
+                return createErrorResponse("Erro ao criar tarefa");
+            }
+        } catch (Exception e) {
+            return createErrorResponse("Erro ao criar tarefa: " + e.getMessage());
+        }
+    }
+
+    private Map<String, Object> executeCreateProject(Map<String, Object> args, UserPrincipal user) {
+        try {
+            String name = (String) args.get("name");
+            String description = (String) args.getOrDefault("description", "Projeto criado via IA");
+
+            Project project = new Project();
+            project.setName(name);
+            project.setDescription(description);
+            project.setStatus(ProjectStatus.ACTIVE);
+
+            Authentication auth = createAuthentication(user);
+            ResponseEntity<Project> response = projectController.createProject(project, auth);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                Project createdProject = response.getBody();
+                return Map.of(
+                    "success", true,
+                    "projectId", createdProject.getId(),
+                    "name", name,
+                    "message", "Projeto '" + name + "' criado com sucesso!"
+                );
+            } else {
+                return createErrorResponse("Erro ao criar projeto");
+            }
+        } catch (Exception e) {
+            return createErrorResponse("Erro ao criar projeto: " + e.getMessage());
+        }
+    }
+
+    private Map<String, Object> executeListProjects(UserPrincipal user) {
+        try {
+            Authentication auth = createAuthentication(user);
+            ResponseEntity<List<Project>> response = projectController.getAllProjects(auth);
+            List<Project> projects = response.getBody();
+
+            List<Map<String, Object>> projectMaps = new ArrayList<>();
+            if (projects != null) {
+                for (Project project : projects) {
+                    Map<String, Object> projectMap = new HashMap<>();
+                    projectMap.put("id", project.getId());
+                    projectMap.put("name", project.getName());
+                    projectMap.put("description", project.getDescription());
+                    projectMap.put("status", project.getStatus());
+                    projectMaps.add(projectMap);
+                }
+            }
+
+            return Map.of(
+                "success", true,
+                "projects", projectMaps,
+                "count", projectMaps.size()
+            );
+        } catch (Exception e) {
+            return createErrorResponse("Erro ao listar projetos: " + e.getMessage());
+        }
+    }
+
+    private Map<String, Object> executeListTasks(Map<String, Object> args, UserPrincipal user) {
+        try {
+            Authentication auth = createAuthentication(user);
+            Object projectIdObj = args.get("projectId");
+
+            List<Task> tasks;
+            if (projectIdObj != null) {
+                Long projectId = Long.valueOf(String.valueOf(projectIdObj));
+                ResponseEntity<List<Task>> response = taskController.getTasksByProject(projectId, auth);
+                tasks = response.getBody();
+            } else {
+                ResponseEntity<List<Task>> response = taskController.getAllTasks(auth);
+                tasks = response.getBody();
+            }
+
+            List<Map<String, Object>> taskMaps = new ArrayList<>();
+            if (tasks != null) {
+                for (Task task : tasks) {
+                    Map<String, Object> taskMap = new HashMap<>();
+                    taskMap.put("id", task.getId());
+                    taskMap.put("title", task.getTitle());
+                    taskMap.put("description", task.getDescription());
+                    taskMap.put("status", task.getStatus());
+                    taskMap.put("priority", task.getPriority());
+                    taskMap.put("projectId", task.getProject().getId());
+                    taskMaps.add(taskMap);
+                }
+            }
+
+            return Map.of(
+                "success", true,
+                "tasks", taskMaps,
+                "count", taskMaps.size()
+            );
+        } catch (Exception e) {
+            return createErrorResponse("Erro ao listar tarefas: " + e.getMessage());
+        }
+    }
+
+    private Map<String, Object> executeUpdateTask(Map<String, Object> args, UserPrincipal user) {
+        try {
+            Long taskId = Long.valueOf(String.valueOf(args.get("taskId")));
+            String title = (String) args.get("title");
+            String description = (String) args.get("description");
+            String status = (String) args.get("status");
+
+            Authentication auth = createAuthentication(user);
+
+            // Se apenas status foi fornecido, usar método específico
+            if (status != null && title == null && description == null) {
+                ResponseEntity<Task> response = taskController.updateTaskStatus(taskId, status, auth);
+                if (response.getStatusCode().is2xxSuccessful()) {
+                    return Map.of(
+                        "success", true,
+                        "message", "Status da tarefa " + taskId + " atualizado para " + status
+                    );
+                }
+            } else {
+                // Atualização geral da tarefa
+                Task taskDetails = new Task();
+                if (title != null) taskDetails.setTitle(title);
+                if (description != null) taskDetails.setDescription(description);
+                if (status != null) taskDetails.setStatus(status);
+
+                ResponseEntity<Task> response = taskController.updateTask(taskId, taskDetails, auth);
+                if (response.getStatusCode().is2xxSuccessful()) {
+                    return Map.of(
+                        "success", true,
+                        "message", "Tarefa " + taskId + " atualizada com sucesso!"
+                    );
+                }
+            }
+
+            return createErrorResponse("Erro ao atualizar tarefa");
+        } catch (Exception e) {
+            return createErrorResponse("Erro ao atualizar tarefa: " + e.getMessage());
+        }
+    }
+
+    private Map<String, Object> executeMoveTask(Map<String, Object> args, UserPrincipal user) {
+        try {
+            Long taskId = Long.valueOf(String.valueOf(args.get("taskId")));
+            String status = (String) args.get("status");
+
+            Authentication auth = createAuthentication(user);
+            ResponseEntity<Task> response = taskController.updateTaskStatus(taskId, status, auth);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                return Map.of(
+                    "success", true,
+                    "message", "Tarefa " + taskId + " movida para " + status + " com sucesso!"
+                );
+            } else {
+                return createErrorResponse("Erro ao mover tarefa");
+            }
+        } catch (Exception e) {
+            return createErrorResponse("Erro ao mover tarefa: " + e.getMessage());
+        }
+    }
+
+    // Métodos auxiliares
+
+    private Map<String, Object> createToolSchema(String name, String description, 
+                                                Map<String, Object> properties, 
+                                                List<String> required) {
+        Map<String, Object> schema = new HashMap<>();
+        schema.put("name", name);
+        schema.put("description", description);
+        
+        Map<String, Object> inputSchema = new HashMap<>();
+        inputSchema.put("type", "object");
+        inputSchema.put("properties", properties);
+        inputSchema.put("required", required);
+        
+        schema.put("input_schema", inputSchema);
+        return schema;
+    }
+
+    private Map<String, Object> createErrorResponse(String message) {
+        return Map.of(
+            "success", false,
+            "error", message
+        );
+    }
+
+    private Authentication createAuthentication(UserPrincipal userPrincipal) {
+        if (userPrincipal == null) {
+            return null;
+        }
+        return new UsernamePasswordAuthenticationToken(
+            userPrincipal,
+            null,
+            userPrincipal.getAuthorities()
+        );
+    }
+}

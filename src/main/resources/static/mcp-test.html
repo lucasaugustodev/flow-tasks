@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste MCP - Model Context Protocol</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .section h2 {
+            color: #34495e;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .demo-btn {
+            background-color: #e74c3c;
+            font-size: 16px;
+            padding: 15px 30px;
+        }
+        .demo-btn:hover {
+            background-color: #c0392b;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Teste MCP - Model Context Protocol</h1>
+        
+        <div class="section">
+            <h2>🎯 Demonstração Completa</h2>
+            <p>Execute uma demonstração completa que cria um projeto e várias tarefas automaticamente:</p>
+            <button class="demo-btn" onclick="runDemo()">▶️ Executar Demonstração MCP</button>
+            <div id="demo-result"></div>
+        </div>
+
+        <div class="grid">
+            <div class="section">
+                <h2>📋 Criar Projeto</h2>
+                <div class="form-group">
+                    <label for="project-name">Nome do Projeto:</label>
+                    <input type="text" id="project-name" value="Meu Novo Projeto">
+                </div>
+                <div class="form-group">
+                    <label for="project-desc">Descrição:</label>
+                    <textarea id="project-desc" rows="3">Descrição do projeto criado via MCP</textarea>
+                </div>
+                <button onclick="createProject()">Criar Projeto</button>
+                <div id="project-result"></div>
+            </div>
+
+            <div class="section">
+                <h2>📝 Criar Tarefa</h2>
+                <div class="form-group">
+                    <label for="task-title">Título da Tarefa:</label>
+                    <input type="text" id="task-title" value="Nova Tarefa MCP">
+                </div>
+                <div class="form-group">
+                    <label for="task-project">ID do Projeto:</label>
+                    <input type="number" id="task-project" value="1">
+                </div>
+                <div class="form-group">
+                    <label for="task-desc">Descrição:</label>
+                    <textarea id="task-desc" rows="2">Tarefa criada via MCP</textarea>
+                </div>
+                <button onclick="createTask()">Criar Tarefa</button>
+                <div id="task-result"></div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="section">
+                <h2>📊 Listar Projetos</h2>
+                <button onclick="listProjects()">Listar Todos os Projetos</button>
+                <div id="projects-result"></div>
+            </div>
+
+            <div class="section">
+                <h2>📋 Listar Tarefas</h2>
+                <div class="form-group">
+                    <label for="list-project-id">ID do Projeto (opcional):</label>
+                    <input type="number" id="list-project-id" placeholder="Deixe vazio para todas">
+                </div>
+                <button onclick="listTasks()">Listar Tarefas</button>
+                <div id="tasks-result"></div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="section">
+                <h2>✏️ Atualizar Tarefa</h2>
+                <div class="form-group">
+                    <label for="update-task-id">ID da Tarefa:</label>
+                    <input type="number" id="update-task-id" value="1">
+                </div>
+                <div class="form-group">
+                    <label for="update-title">Novo Título (opcional):</label>
+                    <input type="text" id="update-title" placeholder="Deixe vazio para não alterar">
+                </div>
+                <div class="form-group">
+                    <label for="update-status">Novo Status (opcional):</label>
+                    <select id="update-status">
+                        <option value="">Não alterar</option>
+                        <option value="BACKLOG">BACKLOG</option>
+                        <option value="IN_PROGRESS">IN_PROGRESS</option>
+                        <option value="DONE">DONE</option>
+                    </select>
+                </div>
+                <button onclick="updateTask()">Atualizar Tarefa</button>
+                <div id="update-result"></div>
+            </div>
+
+            <div class="section">
+                <h2>🔄 Mover Tarefa</h2>
+                <div class="form-group">
+                    <label for="move-task-id">ID da Tarefa:</label>
+                    <input type="number" id="move-task-id" value="1">
+                </div>
+                <div class="form-group">
+                    <label for="move-status">Novo Status:</label>
+                    <select id="move-status">
+                        <option value="BACKLOG">BACKLOG</option>
+                        <option value="IN_PROGRESS">IN_PROGRESS</option>
+                        <option value="DONE">DONE</option>
+                    </select>
+                </div>
+                <button onclick="moveTask()">Mover Tarefa</button>
+                <div id="move-result"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🛠️ Ferramentas MCP Disponíveis</h2>
+            <button onclick="listTools()">Listar Ferramentas</button>
+            <div id="tools-result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Função auxiliar para fazer requisições
+        async function makeRequest(url, method = 'GET', body = null) {
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+                
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+                
+                const response = await fetch(url, options);
+                const data = await response.json();
+                return { success: response.ok, data };
+            } catch (error) {
+                return { success: false, data: { error: error.message } };
+            }
+        }
+
+        // Função auxiliar para mostrar resultado
+        function showResult(elementId, result) {
+            const element = document.getElementById(elementId);
+            const isSuccess = result.success && result.data.success !== false;
+            
+            element.className = `result ${isSuccess ? 'success' : 'error'}`;
+            element.textContent = JSON.stringify(result.data, null, 2);
+        }
+
+        // Demonstração completa
+        async function runDemo() {
+            const result = await makeRequest('/api/mcp-test/demo', 'POST');
+            showResult('demo-result', result);
+        }
+
+        // Criar projeto
+        async function createProject() {
+            const name = document.getElementById('project-name').value;
+            const description = document.getElementById('project-desc').value;
+            
+            const result = await makeRequest('/api/mcp-test/create-project', 'POST', {
+                name, description
+            });
+            showResult('project-result', result);
+        }
+
+        // Criar tarefa
+        async function createTask() {
+            const title = document.getElementById('task-title').value;
+            const projectId = parseInt(document.getElementById('task-project').value);
+            const description = document.getElementById('task-desc').value;
+            
+            const result = await makeRequest('/api/mcp-test/create-task', 'POST', {
+                title, projectId, description
+            });
+            showResult('task-result', result);
+        }
+
+        // Listar projetos
+        async function listProjects() {
+            const result = await makeRequest('/api/mcp-test/list-projects');
+            showResult('projects-result', result);
+        }
+
+        // Listar tarefas
+        async function listTasks() {
+            const projectId = document.getElementById('list-project-id').value;
+            let url = '/api/mcp-test/list-tasks';
+            if (projectId) {
+                url += `?projectId=${projectId}`;
+            }
+            
+            const result = await makeRequest(url);
+            showResult('tasks-result', result);
+        }
+
+        // Atualizar tarefa
+        async function updateTask() {
+            const taskId = parseInt(document.getElementById('update-task-id').value);
+            const title = document.getElementById('update-title').value;
+            const status = document.getElementById('update-status').value;
+            
+            const body = { taskId };
+            if (title) body.title = title;
+            if (status) body.status = status;
+            
+            const result = await makeRequest('/api/mcp-test/update-task', 'PUT', body);
+            showResult('update-result', result);
+        }
+
+        // Mover tarefa
+        async function moveTask() {
+            const taskId = parseInt(document.getElementById('move-task-id').value);
+            const status = document.getElementById('move-status').value;
+            
+            const result = await makeRequest('/api/mcp-test/move-task', 'PUT', {
+                taskId, status
+            });
+            showResult('move-result', result);
+        }
+
+        // Listar ferramentas
+        async function listTools() {
+            const result = await makeRequest('/api/mcp-test/tools');
+            showResult('tools-result', result);
+        }
+
+        // Carregar ferramentas ao inicializar
+        window.onload = function() {
+            listTools();
+        };
+    </script>
+</body>
+</html>

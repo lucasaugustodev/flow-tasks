@@ -1,685 +1,229 @@
 package com.projectmanagement.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.projectmanagement.model.*;
 import com.projectmanagement.security.UserPrincipal;
-import com.projectmanagement.service.OpenRouterClient;
-import com.projectmanagement.service.ProjectService;
-import com.projectmanagement.service.TaskService;
-import com.projectmanagement.service.UserService;
+import com.projectmanagement.service.AnthropicClient;
+import com.projectmanagement.service.MCPClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import javax.servlet.http.HttpSession;
 
-import javax.validation.Valid;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @RestController
 @RequestMapping("/api/ai")
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class AiChatController {
 
-    @Autowired
-    private OpenRouterClient openRouterClient;
-    @Autowired
-    private ProjectService projectService;
-    @Autowired
-    private TaskService taskService;
-    @Autowired
-    private UserService userService;
+    // Endpoint de teste removido - não mais necessário com MCP
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    @Autowired
+    private AnthropicClient anthropicClient;
+
+    @Autowired
+    private MCPClient mcpClient;
 
     @PostMapping("/chat")
-    public ResponseEntity<Map<String, Object>> chat(@Valid @RequestBody Map<String, Object> req,
-                                                    Authentication authentication) {
-        UserPrincipal user = (UserPrincipal) authentication.getPrincipal();
+    public ResponseEntity<Map<String, Object>> chat(
+            @RequestBody Map<String, Object> req,
+            @AuthenticationPrincipal UserPrincipal user,
+            HttpSession session) {
 
-        // Verificar se é uma confirmação de ação
-        if (req.containsKey("confirmAction")) {
-            return handleActionConfirmation(req, user);
-        }
+        String message = String.valueOf(req.get("message"));
 
-        String userMessage = String.valueOf(req.getOrDefault("message", ""));
+        System.out.println("=== CHAT MCP ===");
+        System.out.println("Mensagem recebida: " + message);
 
-        List<Map<String, Object>> messages = new ArrayList<>();
-        messages.add(sysMsg());
-        messages.add(roleMsg("user", userMessage));
-
-        List<Map<String, Object>> tools = buildToolsSchema();
-        Map<String, Object> response = openRouterClient.chatCompletion(messages, tools, "anthropic/claude-sonnet-4");
-
-        // Simple tool-call loop (max 5 turns)
-        for (int i = 0; i < 5; i++) {
-            Map<String, Object> assistantMsg = extractMessage(response);
-            if (assistantMsg == null) break;
-
-            messages.add(assistantMsg);
-            List<Map<String, Object>> toolCalls = extractToolCalls(assistantMsg);
-            if (toolCalls == null || toolCalls.isEmpty()) {
-                break; // final answer
-            }
-
-            for (Map<String, Object> call : toolCalls) {
-                String toolCallId = (String) call.get("id");
-                Map<String, Object> fn = (Map<String, Object>) call.get("function");
-                String name = (String) fn.get("name");
-                String argsJson = String.valueOf(fn.get("arguments"));
-                String result = executeTool(name, argsJson, user);
-                // tool result message
-                Map<String, Object> toolMsg = new HashMap<>();
-                toolMsg.put("role", "tool");
-                toolMsg.put("tool_call_id", toolCallId);
-                toolMsg.put("content", result);
-                messages.add(toolMsg);
-            }
-
-            response = openRouterClient.chatCompletion(messages, tools, "anthropic/claude-sonnet-4");
-        }
-
-        Map<String, Object> finalMsg = extractMessage(response);
-        Map<String, Object> out = new HashMap<>();
-        String finalContent = "";
-
-        if (finalMsg != null) {
-            Object content = finalMsg.get("content");
-            finalContent = content != null ? String.valueOf(content) : "";
-        }
-
-        // Debug: log da resposta final
-        System.out.println("=== RESPOSTA FINAL ===");
-        System.out.println("Final message: " + finalMsg);
-        System.out.println("Final content: " + finalContent);
-        System.out.println("=== FIM RESPOSTA ===");
-
-        // Verificar se a IA está pedindo confirmação
-        if (finalContent.contains("🤔 CONFIRMAR_AÇÃO")) {
-            // Remover o marcador da mensagem
-            finalContent = finalContent.replace("🤔 CONFIRMAR_AÇÃO", "").trim();
-
-            // Criar ação pendente (simplificada por agora)
-            Map<String, Object> pendingAction = new HashMap<>();
-            pendingAction.put("type", "generic_action");
-            pendingAction.put("originalMessage", userMessage);
-            pendingAction.put("messages", messages);
-
-            out.put("message", finalContent + "\n\n⚠️ Esta ação precisa de confirmação. Deseja continuar?");
-            out.put("pendingAction", pendingAction);
-            return ResponseEntity.ok(out);
-        }
-
-        // Se não temos conteúdo, fornecer uma resposta padrão
-        if (finalContent.isEmpty()) {
-            finalContent = "Ação executada com sucesso!";
-        }
-
-        out.put("message", finalContent);
-        return ResponseEntity.ok(out);
+        // Processar com MCP - estratégia única
+        return processWithMCP(message, user);
     }
 
-    private Map<String, Object> sysMsg() {
-        String content = "Você é um assistente para gerenciamento de projetos. Utilize ferramentas quando precisar executar ações. " +
-                "Ferramentas disponíveis: list_projects, create_project, list_tasks, create_task, move_task. " +
-                "Responda em português. Ao criar tarefas/projetos, seja objetivo. " +
-                "IMPORTANTE: Para criar tarefas, SEMPRE pergunte ao usuário em qual projeto criar se ele não especificar. " +
-                "NÃO crie projetos automaticamente. Só crie projetos quando o usuário explicitamente pedir para criar um projeto. " +
-                "Se o usuário pedir para criar uma tarefa sem especificar o projeto, liste os projetos disponíveis e pergunte em qual criar. " +
-                "\n\nMODO CONFIRMAÇÃO: Para ações que modificam dados (move_task, create_task, create_project), " +
-                "PRIMEIRO descreva exatamente o que vai fazer e termine sua resposta com '🤔 CONFIRMAR_AÇÃO'. " +
-                "NÃO execute a ferramenta ainda. Aguarde confirmação do usuário antes de executar.";
-        return roleMsg("system", content);
-    }
+    // Método processNewMessage removido - substituído por processWithMCP
 
-    private Map<String, Object> roleMsg(String role, String content) {
-        Map<String, Object> m = new HashMap<>();
-        m.put("role", role);
-        m.put("content", content);
-        return m;
-    }
+    /**
+     * Método único para processamento com MCP
+     * Sempre usa ferramentas MCP - sem detecção manual
+     */
+    private ResponseEntity<Map<String, Object>> processWithMCP(String message, UserPrincipal user) {
+        try {
+            System.out.println("=== PROCESSANDO COM MCP ===");
+            System.out.println("Mensagem: " + message);
 
-    // Classes auxiliares para extração de informações
-    private static class TaskCreationInfo {
-        String taskName;
-        Long projectId;
+            List<Map<String, Object>> messages = new ArrayList<>();
 
-        TaskCreationInfo(String taskName, Long projectId) {
-            this.taskName = taskName;
-            this.projectId = projectId;
-        }
-    }
+            // System prompt para MCP
+            messages.add(roleMsg("system",
+                "Você é um assistente para gerenciamento de projetos. " +
+                "Você tem acesso a ferramentas para criar tarefas, listar projetos, atualizar tarefas, etc. " +
+                "Use as ferramentas disponíveis sempre que apropriado. " +
+                "Responda em português de forma útil e amigável. " +
+                "Quando o usuário pedir para criar tarefas, use a ferramenta create_task. " +
+                "Quando pedir para listar projetos, use list_projects. " +
+                "Quando pedir para listar tarefas, use list_tasks. " +
+                "Execute as ações diretamente usando as ferramentas - não peça confirmação."
+            ));
 
-    private static class TaskMoveInfo {
-        Long taskId;
-        String newStatus;
+            messages.add(roleMsg("user", message));
 
-        TaskMoveInfo(Long taskId, String newStatus) {
-            this.taskId = taskId;
-            this.newStatus = newStatus;
-        }
-    }
+            // Obter ferramentas MCP
+            List<Map<String, Object>> tools = getMCPTools();
+            System.out.println("Ferramentas MCP disponíveis: " + tools.size());
 
-    private String extractProjectName(String message) {
-        // Extrair nome do projeto de mensagens como "crie um projeto novo chamada projeto novo"
-        String lowerMessage = message.toLowerCase();
+            // Chamar IA com ferramentas MCP
+            Map<String, Object> response = anthropicClient.chatCompletion(messages, tools, "anthropic/claude-sonnet-4");
+            System.out.println("Resposta inicial recebida");
 
-        // Padrões comuns
-        if (lowerMessage.contains("chamad")) {
-            String[] parts = message.split("(?i)chamad[oa]s?\\s+");
-            if (parts.length > 1) {
-                return parts[1].trim().replaceAll("\"", "");
-            }
-        }
+            // Loop de execução de ferramentas MCP
+            for (int i = 0; i < 5; i++) {
+                System.out.println("=== ITERAÇÃO MCP " + (i+1) + " ===");
 
-        if (lowerMessage.contains("nome")) {
-            String[] parts = message.split("(?i)nome\\s+");
-            if (parts.length > 1) {
-                return parts[1].trim().replaceAll("\"", "");
-            }
-        }
-
-        // Fallback: pegar últimas palavras após "projeto"
-        String[] words = message.split("\\s+");
-        boolean foundProjeto = false;
-        StringBuilder projectName = new StringBuilder();
-
-        for (String word : words) {
-            if (foundProjeto) {
-                projectName.append(word).append(" ");
-            }
-            if (word.toLowerCase().contains("projeto")) {
-                foundProjeto = true;
-            }
-        }
-
-        String result = projectName.toString().trim();
-        return result.isEmpty() ? "Novo Projeto" : result;
-    }
-
-    private List<TaskCreationInfo> extractMultipleTaskCreationInfo(String message) {
-        List<TaskCreationInfo> tasks = new ArrayList<>();
-        String lowerMessage = message.toLowerCase();
-
-        // Extrair ID do projeto primeiro
-        Long projectId = 11L; // Default para projeto 11 (teste umdoistres)
-        if (lowerMessage.contains("teste umdoistres")) {
-            projectId = 11L;
-        } else {
-            // Procurar por números após "projeto"
-            String[] words = message.split("\\s+");
-            for (int i = 0; i < words.length; i++) {
-                if (words[i].toLowerCase().contains("projeto") && i + 1 < words.length) {
-                    try {
-                        String nextWord = words[i + 1].replaceAll("[^0-9]", "");
-                        if (!nextWord.isEmpty()) {
-                            projectId = Long.parseLong(nextWord);
-                            break;
-                        }
-                    } catch (NumberFormatException e) {
-                        // Continuar procurando
-                    }
-                }
-            }
-        }
-
-        // Lista de tarefas conhecidas para detectar
-        String[] taskPatterns = {
-            "Elaborar Plano de Treinamento para Novos Funcionários",
-            "Testar Sistema de Backup e Recuperação de Dados",
-            "Criar Manual de Boas Práticas Internas",
-            "Realizar Pesquisa de Satisfação com Funcionários",
-            "Atualizar Software de Gestão Empresarial"
-        };
-
-        // Verificar quais tarefas estão mencionadas na mensagem
-        for (String taskPattern : taskPatterns) {
-            String[] keywords = taskPattern.toLowerCase().split(" ");
-            boolean allKeywordsFound = true;
-
-            // Verificar se todas as palavras-chave principais estão presentes
-            for (String keyword : keywords) {
-                if (keyword.length() > 3 && !lowerMessage.contains(keyword)) {
-                    allKeywordsFound = false;
+                Map<String, Object> assistantMsg = extractMessage(response);
+                if (assistantMsg == null) {
+                    System.out.println("Nenhuma mensagem extraída, parando loop");
                     break;
                 }
-            }
 
-            if (allKeywordsFound) {
-                tasks.add(new TaskCreationInfo(taskPattern, projectId));
-            }
-        }
-
-        // Se não encontrou nenhuma tarefa específica, tentar extrair por padrão "chamada"
-        if (tasks.isEmpty() && lowerMessage.contains("chamad")) {
-            String taskName = "Nova Tarefa";
-            String[] parts = message.split("(?i)chamad[oa]s?\\s+");
-            if (parts.length > 1) {
-                String namepart = parts[1];
-                if (namepart.toLowerCase().contains("no projeto")) {
-                    namepart = namepart.split("(?i)no projeto")[0];
-                }
-                taskName = namepart.trim().replaceAll("[\"']", "");
-            }
-            tasks.add(new TaskCreationInfo(taskName, projectId));
-        }
-
-        return tasks;
-    }
-
-    private TaskCreationInfo extractTaskCreationInfo(String message) {
-        List<TaskCreationInfo> tasks = extractMultipleTaskCreationInfo(message);
-        return tasks.isEmpty() ? new TaskCreationInfo("Nova Tarefa", 11L) : tasks.get(0);
-    }
-
-    private TaskMoveInfo extractTaskMoveInfo(String message) {
-        // Extrair informações de movimentação de tarefa (seguindo padrão simples)
-        String lowerMessage = message.toLowerCase();
-
-        // Extrair ID da tarefa - padrão mais simples
-        Long taskId = 1L; // Default para tarefa 1 se não encontrar
-        String[] words = message.split("\\s+");
-        for (int i = 0; i < words.length; i++) {
-            if (words[i].toLowerCase().contains("tarefa") || words[i].toLowerCase().contains("task")) {
-                if (i + 1 < words.length) {
-                    try {
-                        String nextWord = words[i + 1].replaceAll("[^0-9]", "");
-                        if (!nextWord.isEmpty()) {
-                            taskId = Long.parseLong(nextWord);
-                            break;
-                        }
-                    } catch (NumberFormatException e) {
-                        // Continuar procurando
-                    }
-                }
-            }
-        }
-
-        // Extrair novo status - padrão mais simples
-        String newStatus = "TODO";
-        if (lowerMessage.contains("progresso") || lowerMessage.contains("progress")) {
-            newStatus = "IN_PROGRESS";
-        } else if (lowerMessage.contains("concluir") || lowerMessage.contains("done") || lowerMessage.contains("finalizar")) {
-            newStatus = "DONE";
-        } else if (lowerMessage.contains("todo") || lowerMessage.contains("fazer")) {
-            newStatus = "TODO";
-        }
-
-        return new TaskMoveInfo(taskId, newStatus);
-    }
-
-    // OpenAI tools schema
-    private List<Map<String, Object>> buildToolsSchema() {
-        List<Map<String, Object>> tools = new ArrayList<>();
-        tools.add(tool("list_projects", "Lista projetos acessíveis ao usuário atual", Map.of()));
-        tools.add(tool("create_project", "Cria um novo projeto", Map.of(
-                "type", "object",
-                "properties", Map.of(
-                        "name", Map.of("type", "string"),
-                        "description", Map.of("type", "string")
-                ),
-                "required", List.of("name")
-        )));
-        tools.add(tool("list_tasks", "Lista tarefas, opcionalmente por projeto", Map.of(
-                "type", "object",
-                "properties", Map.of(
-                        "projectId", Map.of("type", "number")
-                )
-        )));
-        tools.add(tool("create_task", "Cria uma tarefa em um projeto", Map.of(
-                "type", "object",
-                "properties", Map.of(
-                        "title", Map.of("type", "string"),
-                        "description", Map.of("type", "string"),
-                        "priority", Map.of("type", "string", "enum", List.of("LOW","MEDIUM","HIGH","URGENT")),
-                        "status", Map.of("type", "string", "enum", List.of("BACKLOG","READY_TO_DEVELOP","IN_PROGRESS","IN_REVIEW","DONE")),
-                        "projectId", Map.of("type", "number"),
-                        "assignedUserId", Map.of("type", "number"),
-                        "dueDate", Map.of("type", "string", "description", "ISO-8601 ex: 2025-01-31T17:00:00")
-                ),
-                "required", List.of("title","projectId")
-        )));
-        tools.add(tool("move_task", "Atualiza status de uma tarefa", Map.of(
-                "type", "object",
-                "properties", Map.of(
-                        "taskId", Map.of("type", "number"),
-                        "status", Map.of("type", "string", "enum", List.of("BACKLOG","READY_TO_DEVELOP","IN_PROGRESS","IN_REVIEW","DONE"))
-                ),
-                "required", List.of("taskId","status")
-        )));
-        return tools;
-    }
-
-    private Map<String, Object> tool(String name, String description, Map<String, Object> parameters) {
-        Map<String, Object> f = new HashMap<>();
-        f.put("name", name);
-        f.put("description", description);
-        if (parameters != null && !parameters.isEmpty()) f.put("parameters", parameters);
-        Map<String, Object> wrapper = new HashMap<>();
-        wrapper.put("type", "function");
-        wrapper.put("function", f);
-        return wrapper;
-    }
-
-    private Map<String, Object> extractMessage(Map<String, Object> resp) {
-        if (resp == null) return null;
-        Object choicesObj = resp.get("choices");
-        if (!(choicesObj instanceof List)) return null;
-        List<?> choices = (List<?>) choicesObj;
-        if (choices.isEmpty()) return null;
-        Object first = choices.get(0);
-        if (!(first instanceof Map)) return null;
-        Map<?,?> firstMap = (Map<?,?>) first;
-        Object msg = firstMap.get("message");
-        if (msg instanceof Map) {
-            Map<String, Object> message = (Map<String, Object>) msg;
-
-            // Se a mensagem tem content vazio mas tem tool_calls,
-            // significa que ainda está processando tools
-            Object content = message.get("content");
-            Object toolCalls = message.get("tool_calls");
-
-            if ((content == null || content.toString().trim().isEmpty()) && toolCalls != null) {
-                // Retorna uma mensagem indicando que a ação foi executada
-                Map<String, Object> finalMessage = new HashMap<>();
-                finalMessage.put("content", "Ação executada com sucesso!");
-                finalMessage.put("role", "assistant");
-                return finalMessage;
-            }
-
-            return message;
-        }
-        return null;
-    }
-
-    private List<Map<String, Object>> extractToolCalls(Map<String, Object> assistantMsg) {
-        if (assistantMsg == null) return null;
-        Object tc = assistantMsg.get("tool_calls");
-        if (tc instanceof List) {
-            return (List<Map<String, Object>>) tc;
-        }
-        return null;
-    }
-
-    private String executeTool(String name, String argsJson, UserPrincipal user) {
-        try {
-            Map<String, Object> args = argsJson == null || argsJson.isBlank()
-                    ? new HashMap<>()
-                    : mapper.readValue(argsJson, Map.class);
-            switch (name) {
-                case "list_projects":
-                    return mapper.writeValueAsString(doListProjects(user));
-                case "create_project":
-                    return mapper.writeValueAsString(doCreateProject(args, user));
-                case "list_tasks":
-                    return mapper.writeValueAsString(doListTasks(args, user));
-                case "create_task":
-                    return mapper.writeValueAsString(doCreateTask(args, user));
-                case "move_task":
-                    return mapper.writeValueAsString(doMoveTask(args, user));
-                default:
-                    return jsonError("Ferramenta desconhecida: " + name);
-            }
-        } catch (Exception e) {
-            return jsonError("Erro na ferramenta '" + name + "': " + e.getMessage());
-        }
-    }
-
-    private Object doListProjects(UserPrincipal user) {
-        List<Project> projects = projectService.getProjectsByUser(user.getId());
-        List<Map<String, Object>> out = new ArrayList<>();
-        for (Project p : projects) {
-            Map<String, Object> m = new HashMap<>();
-            m.put("id", p.getId());
-            m.put("name", p.getName());
-            out.add(m);
-        }
-        return Map.of("projects", out);
-    }
-
-    private Object doCreateProject(Map<String, Object> args, UserPrincipal user) {
-        String name = String.valueOf(args.get("name"));
-        String description = args.get("description") != null ? String.valueOf(args.get("description")) : null;
-        Optional<User> creatorOpt = userService.getUserById(user.getId());
-        if (creatorOpt.isEmpty()) throw new RuntimeException("Usuário não encontrado");
-        User creator = creatorOpt.get();
-
-        Project p = new Project();
-        p.setName(name);
-        p.setDescription(description);
-        p.setStatus(ProjectStatus.ACTIVE);
-        p.setCreatedBy(creator);
-        Project saved = projectService.createProject(p);
-        return Map.of("projectId", saved.getId(), "name", saved.getName());
-    }
-
-    private Object doListTasks(Map<String, Object> args, UserPrincipal user) {
-        Object pidObj = args.get("projectId");
-        List<Task> tasks;
-        if (pidObj != null) {
-            Long projectId = toLong(pidObj);
-            if (!projectService.hasUserAccess(projectId, user.getId())) {
-                throw new RuntimeException("Acesso negado ao projeto " + projectId);
-            }
-            tasks = taskService.getTasksByProjectOrderedForKanban(projectId);
-        } else {
-            tasks = taskService.getTasksByUserProjects(user.getId());
-        }
-        List<Map<String, Object>> out = new ArrayList<>();
-        for (Task t : tasks) {
-            Map<String, Object> m = new HashMap<>();
-            m.put("id", t.getId());
-            m.put("title", t.getTitle());
-            m.put("status", t.getStatus());
-            m.put("projectId", t.getProject() != null ? t.getProject().getId() : null);
-            out.add(m);
-        }
-        return Map.of("tasks", out);
-    }
-
-    private Object doCreateTask(Map<String, Object> args, UserPrincipal user) {
-        String title = String.valueOf(args.get("title"));
-        String description = args.get("description") != null ? String.valueOf(args.get("description")) : null;
-        String status = args.get("status") != null ? String.valueOf(args.get("status")) : "BACKLOG";
-        String priorityStr = args.get("priority") != null ? String.valueOf(args.get("priority")) : "MEDIUM";
-        Long projectId = toLong(args.get("projectId"));
-        Long assignedUserId = args.get("assignedUserId") != null ? toLong(args.get("assignedUserId")) : null;
-        String dueDateStr = args.get("dueDate") != null ? String.valueOf(args.get("dueDate")) : null;
-
-        if (!projectService.hasUserAccess(projectId, user.getId())) {
-            throw new RuntimeException("Acesso negado ao projeto " + projectId);
-        }
-
-        Optional<User> creatorOpt = userService.getUserById(user.getId());
-        if (creatorOpt.isEmpty()) throw new RuntimeException("Usuário não encontrado");
-        User creator = creatorOpt.get();
-
-        Optional<Project> projectOpt = projectService.getProjectById(projectId);
-        if (projectOpt.isEmpty()) throw new RuntimeException("Projeto não encontrado: " + projectId);
-        Project project = projectOpt.get();
-
-        Task t = new Task();
-        t.setTitle(title);
-        t.setDescription(description);
-        t.setStatus(status);
-        try {
-            t.setPriority(TaskPriority.valueOf(priorityStr));
-        } catch (IllegalArgumentException e) {
-            t.setPriority(TaskPriority.MEDIUM);
-        }
-        if (dueDateStr != null) {
-            try {
-                t.setDueDate(LocalDateTime.parse(dueDateStr));
-            } catch (DateTimeParseException ignored) {}
-        }
-        t.setProject(project);
-        if (assignedUserId != null) {
-            userService.getUserById(assignedUserId).ifPresent(t::setAssignedUser);
-        }
-        t.setCreatedBy(creator);
-
-        Task saved = taskService.createTask(t);
-        return Map.of("taskId", saved.getId(), "title", saved.getTitle(), "status", saved.getStatus());
-    }
-
-    private Object doMoveTask(Map<String, Object> args, UserPrincipal user) {
-        Long taskId = toLong(args.get("taskId"));
-        String status = String.valueOf(args.get("status"));
-
-        Optional<Task> taskOpt = taskService.getTaskById(taskId);
-        if (taskOpt.isEmpty()) throw new RuntimeException("Tarefa não encontrada: " + taskId);
-        Task existing = taskOpt.get();
-        Long projectId = existing.getProject() != null ? existing.getProject().getId() : null;
-        if (projectId == null || !projectService.hasUserAccess(projectId, user.getId())) {
-            throw new RuntimeException("Acesso negado ao projeto da tarefa");
-        }
-        Task updated = taskService.updateTaskStatus(taskId, status);
-        return Map.of("taskId", updated.getId(), "status", updated.getStatus());
-    }
-
-    private Long toLong(Object v) {
-        if (v == null) return null;
-        if (v instanceof Number) return ((Number) v).longValue();
-        return Long.parseLong(String.valueOf(v));
-    }
-
-    private String jsonError(String msg) {
-        try {
-            return mapper.writeValueAsString(Map.of("error", msg));
-        } catch (JsonProcessingException e) {
-            return "{\"error\":\"" + msg + "\"}";
-        }
-    }
-
-    private ResponseEntity<Map<String, Object>> handleActionConfirmation(Map<String, Object> req, UserPrincipal user) {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> pendingAction = (Map<String, Object>) req.get("confirmAction");
-        Boolean approved = (Boolean) req.get("approved");
-
-        Map<String, Object> out = new HashMap<>();
-
-        if (!approved) {
-            out.put("message", "❌ Ação cancelada pelo usuário.");
-            return ResponseEntity.ok(out);
-        }
-
-        // Executar a ação confirmada
-        try {
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> originalMessages = (List<Map<String, Object>>) pendingAction.get("messages");
-
-            System.out.println("=== CONFIRMAÇÃO DEBUG ===");
-            System.out.println("Pending action: " + pendingAction);
-            System.out.println("Original messages size: " + (originalMessages != null ? originalMessages.size() : "null"));
-
-            // Adicionar mensagem de confirmação
-            originalMessages.add(roleMsg("user", "✅ Confirmado! Execute a ação."));
-
-            // FORÇAR execução da ferramenta baseada na mensagem original
-            String originalMessage = String.valueOf(pendingAction.get("originalMessage"));
-            System.out.println("Mensagem original: " + originalMessage);
-
-            // Detectar e executar a ação diretamente
-            if (originalMessage.toLowerCase().contains("crie") && originalMessage.toLowerCase().contains("projeto") && !originalMessage.toLowerCase().contains("tarefa")) {
-                // CRIAR PROJETO (apenas se não mencionar tarefas)
-                String projectName = extractProjectName(originalMessage);
-                System.out.println("Nome extraído: " + projectName);
-                System.out.println("Executando create_project com nome: " + projectName);
-
-                String result = executeTool("create_project", "{\"name\":\"" + projectName + "\"}", user);
-                System.out.println("Resultado da ferramenta: " + result);
-
-                originalMessages.add(roleMsg("user", "Ferramenta executada com sucesso. Resultado: " + result));
-                originalMessages.add(roleMsg("system", "A ferramenta foi executada. Responda ao usuário confirmando que a ação foi realizada com sucesso."));
-
-            } else if (originalMessage.toLowerCase().contains("crie") && originalMessage.toLowerCase().contains("tarefa")) {
-                // CRIAR TAREFAS (múltiplas tarefas)
-                List<TaskCreationInfo> tasks = extractMultipleTaskCreationInfo(originalMessage);
-                System.out.println("Tarefas extraídas: " + tasks.size());
-
-                StringBuilder allResults = new StringBuilder();
-                allResults.append("Tarefas criadas: ");
-
-                for (int i = 0; i < tasks.size(); i++) {
-                    TaskCreationInfo taskInfo = tasks.get(i);
-                    System.out.println("Criando tarefa " + (i+1) + ": " + taskInfo.taskName + " no projeto: " + taskInfo.projectId);
-                    System.out.println("Executando create_task");
-
-                    String args = "{\"title\":\"" + taskInfo.taskName + "\",\"projectId\":" + taskInfo.projectId + "}";
-                    String result = executeTool("create_task", args, user);
-                    System.out.println("Resultado da ferramenta: " + result);
-
-                    allResults.append((i+1)).append(". ").append(taskInfo.taskName).append(" ");
-                }
-
-                originalMessages.add(roleMsg("user", "Ferramentas executadas com sucesso. Resultado: " + allResults.toString()));
-                originalMessages.add(roleMsg("system", "As ferramentas foram executadas. Responda ao usuário confirmando que todas as tarefas foram criadas com sucesso."));
-
-            } else if (originalMessage.toLowerCase().contains("mover") || originalMessage.toLowerCase().contains("move")) {
-                // MOVER TAREFA (copiando exatamente o padrão que funciona para projetos)
-                TaskMoveInfo moveInfo = extractTaskMoveInfo(originalMessage);
-                System.out.println("Movendo tarefa ID: " + moveInfo.taskId + " para status: " + moveInfo.newStatus);
-                System.out.println("Executando move_task");
-
-                String args = "{\"taskId\":" + moveInfo.taskId + ",\"newStatus\":\"" + moveInfo.newStatus + "\"}";
-                String result = executeTool("move_task", args, user);
-                System.out.println("Resultado da ferramenta: " + result);
-
-                originalMessages.add(roleMsg("user", "Ferramenta executada com sucesso. Resultado: " + result));
-                originalMessages.add(roleMsg("system", "A ferramenta foi executada. Responda ao usuário confirmando que a ação foi realizada com sucesso."));
-
-            } else {
-                System.out.println("Não detectou ação específica, usando fallback");
-                // Fallback para o prompt original
-                String executionPrompt = "O usuário confirmou a ação. AGORA VOCÊ DEVE EXECUTAR A FERRAMENTA IMEDIATAMENTE. " +
-                        "Use a ferramenta apropriada (create_project, create_task, move_task) para realizar a ação que foi confirmada. " +
-                        "NÃO responda com texto - EXECUTE A FERRAMENTA AGORA.";
-                originalMessages.add(roleMsg("system", executionPrompt));
-            }
-
-            List<Map<String, Object>> tools = buildToolsSchema();
-            Map<String, Object> response = openRouterClient.chatCompletion(originalMessages, tools, "anthropic/claude-sonnet-4");
-
-            // Loop de execução de tools
-            for (int i = 0; i < 5; i++) {
-                Map<String, Object> assistantMsg = extractMessage(response);
-                if (assistantMsg == null) break;
-
-                originalMessages.add(assistantMsg);
+                messages.add(assistantMsg);
                 List<Map<String, Object>> toolCalls = extractToolCalls(assistantMsg);
+                System.out.println("Tool calls encontradas: " + (toolCalls != null ? toolCalls.size() : 0));
+
                 if (toolCalls == null || toolCalls.isEmpty()) {
-                    break; // final answer
+                    System.out.println("Nenhuma tool call, finalizando");
+                    break; // Resposta final
                 }
 
-                // Execute tools
+                // Executar ferramentas via MCPClient
                 for (Map<String, Object> toolCall : toolCalls) {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> fn = (Map<String, Object>) toolCall.get("function");
                     String name = String.valueOf(fn.get("name"));
                     String argsJson = String.valueOf(fn.get("arguments"));
-                    String result = executeTool(name, argsJson, user);
-                    originalMessages.add(roleMsg("tool", result));
+
+                    System.out.println("Executando ferramenta: " + name);
+                    System.out.println("Argumentos: " + argsJson);
+
+                    String result = executeMCPTool(name, argsJson, user);
+                    System.out.println("Resultado: " + result);
+
+                    Map<String, Object> toolResult = new HashMap<>();
+                    toolResult.put("role", "tool");
+                    toolResult.put("tool_call_id", toolCall.get("id"));
+                    toolResult.put("content", result);
+                    messages.add(toolResult);
                 }
 
-                response = openRouterClient.chatCompletion(originalMessages, tools, "anthropic/claude-sonnet-4");
+                response = anthropicClient.chatCompletion(messages, tools, "anthropic/claude-sonnet-4");
             }
 
+            // Extrair resposta final
             Map<String, Object> finalMsg = extractMessage(response);
-            String finalContent = "";
+            String finalContent = "✅ Processado com sucesso!";
             if (finalMsg != null) {
                 Object content = finalMsg.get("content");
-                finalContent = content != null ? String.valueOf(content) : "✅ Ação executada com sucesso!";
+                finalContent = content != null ? String.valueOf(content) : finalContent;
             }
 
-            out.put("message", finalContent);
-            return ResponseEntity.ok(out);
+            return createResponse(finalContent);
 
         } catch (Exception e) {
-            out.put("message", "❌ Erro ao executar ação: " + e.getMessage());
-            return ResponseEntity.ok(out);
+            System.err.println("Erro no processamento MCP: " + e.getMessage());
+            e.printStackTrace();
+            return createResponse("❌ Erro ao processar com MCP: " + e.getMessage());
         }
     }
-}
 
+    /**
+     * Obtém ferramentas MCP no formato esperado pelo AnthropicClient
+     */
+    private List<Map<String, Object>> getMCPTools() {
+        List<Map<String, Object>> mcpTools = mcpClient.getAvailableTools();
+        List<Map<String, Object>> anthropicTools = new ArrayList<>();
+
+        for (Map<String, Object> mcpTool : mcpTools) {
+            Map<String, Object> anthropicTool = new HashMap<>();
+            anthropicTool.put("type", "function");
+
+            Map<String, Object> function = new HashMap<>();
+            function.put("name", mcpTool.get("name"));
+            function.put("description", mcpTool.get("description"));
+            function.put("parameters", mcpTool.get("input_schema"));
+
+            anthropicTool.put("function", function);
+            anthropicTools.add(anthropicTool);
+        }
+
+        return anthropicTools;
+    }
+
+    /**
+     * Executa ferramenta MCP e retorna resultado como JSON string
+     */
+    private String executeMCPTool(String toolName, String argsJson, UserPrincipal user) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            @SuppressWarnings("unchecked")
+            Map<String, Object> args = mapper.readValue(argsJson, Map.class);
+
+            Map<String, Object> result = mcpClient.executeTool(toolName, args, user);
+            return mapper.writeValueAsString(result);
+
+        } catch (Exception e) {
+            System.err.println("Erro ao executar ferramenta MCP " + toolName + ": " + e.getMessage());
+            return "{\"success\": false, \"error\": \"" + e.getMessage() + "\"}";
+        }
+    }
+
+    // Método processWithAI removido - substituído por processWithMCP
+
+    // Método listProjects removido - substituído por MCP
+
+    // Método listTasks removido - substituído por MCP
+
+    // Método executeTaskCreationDirectly removido - substituído por MCP
+
+    // Método extractTaskNames removido - substituído por MCP
+
+    // Método executeConfirmedAction removido - sistema de confirmação não mais necessário com MCP
+
+    // Método handleActionConfirmation removido - sistema de confirmação não mais necessário com MCP
+
+    // Métodos auxiliares
+
+    private Map<String, Object> roleMsg(String role, String content) {
+        Map<String, Object> msg = new HashMap<>();
+        msg.put("role", role);
+        msg.put("content", content);
+        return msg;
+    }
+
+    private ResponseEntity<Map<String, Object>> createResponse(String message) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", message);
+        return ResponseEntity.ok(response);
+    }
+
+    // Métodos auxiliares para extração e execução de ferramentas
+    private Map<String, Object> extractMessage(Map<String, Object> response) {
+        if (response == null) return null;
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
+        if (choices == null || choices.isEmpty()) return null;
+
+        Map<String, Object> choice = choices.get(0);
+        return (Map<String, Object>) choice.get("message");
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> extractToolCalls(Map<String, Object> message) {
+        if (message == null) return null;
+        return (List<Map<String, Object>>) message.get("tool_calls");
+    }
+
+    // Métodos buildToolsSchema e createTool removidos - substituídos por MCP
+
+    // Método executeTool antigo removido - substituído por executeMCPTool
+
+    // Método createAuthentication removido - não mais necessário com MCP
+}
