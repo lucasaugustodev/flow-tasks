@@ -75,6 +75,17 @@
       <version>1.4</version>
     </dependency>
 
+    <!-- Zep Memory para contexto conversacional -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-webflux</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.projectreactor.netty</groupId>
+      <artifactId>reactor-netty-http</artifactId>
+    </dependency>
+
     <!-- Test Dependencies -->
     <dependency>
       <groupId>org.springframework.boot</groupId>

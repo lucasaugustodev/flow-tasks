@@ -40,10 +40,10 @@ public class MCPClient {
         // create_task
         tools.add(createToolSchema(
             "create_task",
-            "Cria uma nova tarefa em um projeto específico",
+            "Cria uma nova tarefa em um projeto EXISTENTE. Use list_projects primeiro para obter o projectId correto. NUNCA invente IDs de projeto.",
             Map.of(
                 "title", Map.of("type", "string", "description", "Título da tarefa"),
-                "projectId", Map.of("type", "integer", "description", "ID do projeto"),
+                "projectId", Map.of("type", "integer", "description", "ID do projeto EXISTENTE (obtenha via list_projects)"),
                 "description", Map.of("type", "string", "description", "Descrição da tarefa (opcional)")
             ),
             Arrays.asList("title", "projectId")
@@ -63,7 +63,7 @@ public class MCPClient {
         // list_projects
         tools.add(createToolSchema(
             "list_projects",
-            "Lista todos os projetos disponíveis para o usuário",
+            "Lista todos os projetos disponíveis. SEMPRE use esta ferramenta ANTES de criar tarefas para verificar projetos existentes.",
             Map.of(),
             Arrays.asList()
         ));
@@ -81,9 +81,9 @@ public class MCPClient {
         // update_task
         tools.add(createToolSchema(
             "update_task",
-            "Atualiza informações de uma tarefa existente",
+            "Atualiza informações de uma tarefa ESPECÍFICA. Use list_tasks primeiro para obter o taskId correto. NUNCA invente IDs de tarefa.",
             Map.of(
-                "taskId", Map.of("type", "integer", "description", "ID da tarefa"),
+                "taskId", Map.of("type", "integer", "description", "ID da tarefa EXISTENTE (obtenha via list_tasks)"),
                 "title", Map.of("type", "string", "description", "Novo título (opcional)"),
                 "description", Map.of("type", "string", "description", "Nova descrição (opcional)"),
                 "status", Map.of("type", "string", "description", "Novo status: BACKLOG, IN_PROGRESS, DONE (opcional)")
@@ -94,9 +94,9 @@ public class MCPClient {
         // move_task
         tools.add(createToolSchema(
             "move_task",
-            "Move uma tarefa para um novo status",
+            "Move uma tarefa ESPECÍFICA para um novo status. Use list_tasks primeiro para obter o taskId correto. NUNCA invente IDs de tarefa.",
             Map.of(
-                "taskId", Map.of("type", "integer", "description", "ID da tarefa"),
+                "taskId", Map.of("type", "integer", "description", "ID da tarefa EXISTENTE (obtenha via list_tasks)"),
                 "status", Map.of("type", "string", "description", "Novo status: BACKLOG, IN_PROGRESS, DONE")
             ),
             Arrays.asList("taskId", "status")
@@ -157,6 +157,23 @@ public class MCPClient {
             Long projectId = Long.valueOf(String.valueOf(args.get("projectId")));
             String description = (String) args.getOrDefault("description", "Tarefa criada via IA");
 
+            // Validar se o projeto existe primeiro
+            Authentication auth = createAuthentication(user);
+            ResponseEntity<List<Project>> projectsResponse = projectController.getAllProjects(auth);
+            List<Project> projects = projectsResponse.getBody();
+
+            boolean projectExists = projects != null && projects.stream()
+                .anyMatch(p -> p.getId().equals(projectId));
+
+            if (!projectExists) {
+                String availableProjects = projects != null ?
+                    projects.stream()
+                        .map(p -> "ID: " + p.getId() + " - " + p.getName())
+                        .collect(java.util.stream.Collectors.joining(", ")) :
+                    "nenhum";
+                return createErrorResponse("Projeto com ID " + projectId + " não existe. Projetos disponíveis: " + availableProjects + ". Use list_projects para ver os IDs corretos.");
+            }
+
             Task task = new Task();
             task.setTitle(title);
             task.setDescription(description);
@@ -168,7 +185,6 @@ public class MCPClient {
             project.setId(projectId);
             task.setProject(project);
 
-            Authentication auth = createAuthentication(user);
             ResponseEntity<Task> response = taskController.createTask(task, auth);
 
             if (response.getStatusCode().is2xxSuccessful()) {
@@ -178,7 +194,7 @@ public class MCPClient {
                     "taskId", createdTask.getId(),
                     "title", title,
                     "projectId", projectId,
-                    "message", "Tarefa '" + title + "' criada com sucesso!"
+                    "message", "Tarefa '" + title + "' criada com sucesso no projeto ID " + projectId + "!"
                 );
             } else {
                 return createErrorResponse("Erro ao criar tarefa");
@@ -235,10 +251,16 @@ public class MCPClient {
                 }
             }
 
+            String message = projectMaps.isEmpty() ?
+                "Nenhum projeto encontrado. Crie um projeto primeiro antes de criar tarefas." :
+                "Projetos disponíveis encontrados. Use o ID do projeto para criar tarefas.";
+
             return Map.of(
                 "success", true,
                 "projects", projectMaps,
-                "count", projectMaps.size()
+                "count", projectMaps.size(),
+                "message", message,
+                "instruction", "Para criar tarefas, use o 'id' de um destes projetos existentes como 'projectId'"
             );
         } catch (Exception e) {
             return createErrorResponse("Erro ao listar projetos: " + e.getMessage());
@@ -274,10 +296,16 @@ public class MCPClient {
                 }
             }
 
+            String message = taskMaps.isEmpty() ?
+                "Nenhuma tarefa encontrada." :
+                "Tarefas encontradas. Use o 'id' da tarefa para atualizar ou mover tarefas específicas.";
+
             return Map.of(
                 "success", true,
                 "tasks", taskMaps,
-                "count", taskMaps.size()
+                "count", taskMaps.size(),
+                "message", message,
+                "instruction", "Para atualizar/mover tarefas, use o 'id' de uma destas tarefas como 'taskId'"
             );
         } catch (Exception e) {
             return createErrorResponse("Erro ao listar tarefas: " + e.getMessage());
