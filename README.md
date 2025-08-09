@@ -23,7 +23,7 @@ Este é um sistema completo de **gerenciamento de projetos e tarefas** desenvolv
 ### ✨ Principais Características
 
 - 🔐 **Autenticação JWT** segura e robusta
-- 📊 **Dashboard interativo** com métricas em tempo real  
+- 📊 **Dashboard interativo** com métricas em tempo real
 - 📋 **Quadro Kanban** para gestão visual de tarefas
 - 👥 **Gestão de equipes** e controle de acesso
 - 💬 **Sistema de comentários** em tarefas
@@ -31,6 +31,8 @@ Este é um sistema completo de **gerenciamento de projetos e tarefas** desenvolv
 - 📄 **Detalhes completos** de projetos com abas organizadas
 - 📱 **Interface responsiva** para todos os dispositivos
 - 🎨 **Design moderno** com UX otimizada
+- 🤖 **Assistente IA** com Claude e protocolo MCP
+- 🧠 **Memória conversacional** com Zep Memory
 
 ---
 
@@ -60,11 +62,21 @@ Este é um sistema completo de **gerenciamento de projetos e tarefas** desenvolv
 - ✅ **Checklists** para quebrar tarefas complexas
 - 📊 **Acompanhamento** de progresso individual
 
+### 🤖 Assistente IA com MCP
+- 🧠 **Claude 3.5 Haiku** integrado para assistência inteligente
+- 🔧 **Protocolo MCP** (Model Context Protocol) personalizado
+- 💬 **Chat natural** para gerenciar projetos e tarefas
+- 🎯 **Comandos inteligentes** como "crie um projeto chamado X"
+- 📊 **Contexto conversacional** com Zep Memory
+- 🔍 **Busca semântica** no histórico de conversas
+- ⚡ **Ações automáticas** baseadas em linguagem natural
+
 ### 🔐 Segurança e Autenticação
 - 🛡️ **JWT Authentication** com interceptors automáticos
 - 🔒 **Controle de acesso** baseado em papéis
 - 🚪 **Logout automático** em caso de token expirado
 - 🔄 **Renovação** transparente de sessões
+- 🔐 **API Keys** protegidas com variáveis de ambiente
 
 ---
 
@@ -78,6 +90,9 @@ Este é um sistema completo de **gerenciamento de projetos e tarefas** desenvolv
 - **H2 Database** - Banco de dados persistente
 - **JWT** - Tokens de autenticação
 - **Maven** - Gerenciamento de dependências
+- **Anthropic Claude API** - Inteligência artificial
+- **Zep Memory** - Contexto conversacional
+- **MCP Protocol** - Ferramentas personalizadas
 
 ### Frontend  
 - **Angular 16** - Framework frontend
@@ -99,13 +114,154 @@ Este é um sistema completo de **gerenciamento de projetos e tarefas** desenvolv
 
 ### 📋 Pré-requisitos
 - **Java 11** ou superior
-- **Node.js 16** ou superior  
+- **Node.js 16** ou superior
 - **Maven 3.6** ou superior
 - **Git** para clonar o repositório
+- **Anthropic API Key** - Para funcionalidades de IA
+- **Zep Memory API Key** - Para contexto conversacional (opcional)
+
+---
+
+## 🤖 Protocolo MCP (Model Context Protocol)
+
+### 📋 Sobre o MCP
+
+O **MCP (Model Context Protocol)** é um protocolo personalizado que desenvolvemos para integrar o assistente de IA Claude com as funcionalidades do sistema de gerenciamento de projetos. Ele permite que a IA execute ações reais no sistema através de comandos em linguagem natural.
+
+### 🛠️ Ferramentas MCP Implementadas
+
+#### 📁 **Gerenciamento de Projetos**
+```javascript
+// Ferramentas disponíveis:
+- create_project    // Criar novo projeto
+- list_projects     // Listar projetos do usuário
+- get_project       // Obter detalhes de um projeto
+- update_project    // Atualizar informações do projeto
+- delete_project    // Excluir projeto
+```
+
+#### 📝 **Gerenciamento de Tarefas**
+```javascript
+// Ferramentas disponíveis:
+- create_task       // Criar nova tarefa
+- list_tasks        // Listar tarefas (com filtros)
+- get_task          // Obter detalhes de uma tarefa
+- update_task       // Atualizar informações da tarefa
+- move_task         // Mover tarefa entre status
+- assign_task       // Atribuir responsável
+- delete_task       // Excluir tarefa
+```
+
+#### 👥 **Gerenciamento de Usuários**
+```javascript
+// Ferramentas disponíveis:
+- list_users        // Listar usuários do sistema
+- get_user          // Obter informações de usuário
+```
+
+### 💬 Exemplos de Comandos Naturais
+
+#### **Criação de Projetos**
+```bash
+"Crie um projeto chamado 'Website da Empresa'"
+"Criar projeto 'App Mobile' com prazo para dezembro"
+"Novo projeto: Sistema de Vendas"
+```
+
+#### **Gerenciamento de Tarefas**
+```bash
+"Crie uma tarefa de login no projeto Website"
+"Adicione tarefa 'Implementar dashboard' com prioridade alta"
+"Crie tarefas: página inicial, cadastro de usuários, relatórios"
+```
+
+#### **Movimentação de Tarefas**
+```bash
+"Mova essa tarefa para in progress"
+"Coloque a tarefa de login em done"
+"Mude todas as tarefas do projeto X para testing"
+```
+
+#### **Consultas Inteligentes**
+```bash
+"Liste os projetos ativos"
+"Mostre as tarefas em andamento"
+"Quais tarefas estão atrasadas?"
+"Projetos do usuário João"
+```
+
+### 🧠 Sistema de Contexto Inteligente
+
+#### **Zep Memory Integration**
+- **Memória de longo prazo** - Lembra conversas anteriores
+- **Busca semântica** - Encontra informações relevantes
+- **Fatos estruturados** - Organiza dados de projetos e tarefas
+- **Contexto de sessão** - Mantém referências atuais
+
+#### **Resolução de Referências**
+```bash
+# A IA entende referências contextuais:
+"Crie um projeto Website"
+"Adicione uma tarefa de login"      # Usa o projeto Website
+"Mova essa tarefa para done"        # Usa a tarefa de login
+"Atualize esse projeto"             # Usa o projeto Website
+```
+
+### 🔧 Configuração do MCP
+
+#### **1. Configurar API Keys**
+```bash
+# Copie o arquivo de exemplo
+cp .env.example .env
+
+# Configure suas chaves
+ANTHROPIC_API_KEY=sk-ant-api03-sua-chave-aqui
+ZEP_API_KEY=z_sua-chave-zep-aqui
+```
+
+#### **2. Obter API Keys**
+
+**Anthropic Claude:**
+1. Acesse [console.anthropic.com](https://console.anthropic.com)
+2. Crie uma conta e configure billing
+3. Gere uma API key na seção "API Keys"
+
+**Zep Memory (Opcional):**
+1. Acesse [www.getzep.com](https://www.getzep.com)
+2. Crie uma conta gratuita
+3. Obtenha sua API key no dashboard
+
+### 🚀 Como Usar o Assistente IA
+
+#### **1. Acesse o Chat**
+- Faça login no sistema
+- Clique no ícone de chat ou acesse `/chat`
+- Digite comandos em linguagem natural
+
+#### **2. Comandos Básicos**
+```bash
+# Projetos
+"liste meus projetos"
+"crie um projeto chamado [nome]"
+"detalhes do projeto [nome/id]"
+
+# Tarefas
+"crie uma tarefa [nome] no projeto [nome]"
+"liste tarefas do projeto [nome]"
+"mova tarefa [id] para [status]"
+
+# Contexto
+"mova essa tarefa para done"        # Usa última tarefa mencionada
+"atualize esse projeto"             # Usa último projeto mencionado
+```
+
+#### **3. Funcionalidades Avançadas**
+- **Criação em massa**: "Crie tarefas: login, dashboard, relatórios"
+- **Filtros inteligentes**: "Tarefas em atraso do projeto X"
+- **Ações contextuais**: "Mova todas para testing"
+- **Consultas complexas**: "Projetos com mais de 5 tarefas"
 
 ### 🔧 Instalação
-
-1. **Clone o repositório**
 ```bash
 git clone <repository-url>
 cd vscode-remote-try-java
@@ -183,6 +339,11 @@ docker run -p 8080:8080 project-management
 - ✅ **Página de Detalhes** do projeto com abas
 - ✅ **Controle de Acesso** por projeto
 - ✅ **Interface Responsiva** para mobile/desktop
+- ✅ **Assistente IA** com Claude 3.5 Haiku
+- ✅ **Protocolo MCP** personalizado
+- ✅ **Contexto Conversacional** com Zep Memory
+- ✅ **Comandos em Linguagem Natural**
+- ✅ **Resolução de Referências Contextuais**
 
 ### 🚧 **Funcionalidades Futuras**
 - 🔄 **Notificações** em tempo real
@@ -223,6 +384,19 @@ docker run -p 8080:8080 project-management
 ```http
 POST /api/auth/signin     # Login do usuário
 POST /api/auth/signup     # Registro de novo usuário
+```
+
+### 🤖 Chat com IA (MCP)
+```http
+POST /api/chat/message    # Enviar mensagem para o assistente IA
+# Body: { "message": "crie um projeto chamado Website" }
+# Response: { "response": "✅ Projeto 'Website' criado com sucesso!" }
+
+# Exemplos de mensagens:
+# "liste meus projetos"
+# "crie uma tarefa de login no projeto Website"
+# "mova essa tarefa para in progress"
+# "mostre tarefas em atraso"
 ```
 
 ### 📋 Projetos
