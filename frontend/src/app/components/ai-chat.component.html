@@ -1,0 +1,13 @@
+<app-header></app-header>
+<div class="ai-chat">
+  <div class="chat-window">
+    <div class="msg" *ngFor="let m of messages" [class.user]="m.role==='user'" [class.assistant]="m.role==='assistant'">
+      <div class="bubble">{{ m.content }}</div>
+    </div>
+  </div>
+  <div class="composer">
+    <input [(ngModel)]="input" (keyup.enter)="send()" placeholder="Escreva aqui..." />
+    <button (click)="send()" [disabled]="loading">{{ loading ? 'Enviando...' : 'Enviar' }}</button>
+  </div>
+</div>
+

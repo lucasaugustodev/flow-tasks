@@ -6,6 +6,7 @@ import { ProjectsComponent } from './components/projects.component';
 import { ProjectDetailComponent } from './components/project-detail.component';
 import { KanbanBoardComponent } from './components/kanban-board.component';
 import { AuthGuard } from './guards/auth.guard';
+import { AiChatComponent } from './components/ai-chat.component';
 
 const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
@@ -14,6 +15,7 @@ const routes: Routes = [
   { path: 'projects', component: ProjectsComponent, canActivate: [AuthGuard] },
   { path: 'projects/:id', component: ProjectDetailComponent, canActivate: [AuthGuard] },
   { path: 'kanban', component: KanbanBoardComponent, canActivate: [AuthGuard] },
+  { path: 'ai-chat', component: AiChatComponent, canActivate: [AuthGuard] },
   { path: '**', redirectTo: '/dashboard' }
 ];
 

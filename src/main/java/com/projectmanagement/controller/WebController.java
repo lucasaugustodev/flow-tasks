@@ -12,7 +12,7 @@ public class WebController {
     }
 
     // Angular routes - forward to Angular SPA
-    @GetMapping(value = {"/login", "/register", "/dashboard", "/projects", "/projects/**", "/kanban", "/profile", "/settings"})
+    @GetMapping(value = {"/login", "/register", "/dashboard", "/projects", "/projects/**", "/kanban", "/profile", "/settings", "/ai-chat"})
     public String angular() {
         return "forward:/index.html";
     }

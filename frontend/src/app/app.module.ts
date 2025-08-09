@@ -15,6 +15,7 @@ import { ProjectDetailComponent } from './components/project-detail.component';
 import { HeaderComponent } from './components/header.component';
 import { KanbanBoardComponent } from './components/kanban-board.component';
 import { TaskDetailModalComponent } from './components/task-detail-modal.component';
+import { AiChatComponent } from './components/ai-chat.component';
 
 @NgModule({
   declarations: [
@@ -25,7 +26,8 @@ import { TaskDetailModalComponent } from './components/task-detail-modal.compone
     ProjectDetailComponent,
     HeaderComponent,
     KanbanBoardComponent,
-    TaskDetailModalComponent
+    TaskDetailModalComponent,
+    AiChatComponent
   ],
   imports: [
     BrowserModule,

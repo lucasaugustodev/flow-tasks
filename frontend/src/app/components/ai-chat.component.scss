@@ -1,0 +1,13 @@
+.ai-chat { max-width: 900px; margin: 24px auto; padding: 0 16px; }
+.chat-window { height: 60vh; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; overflow: auto; background: #fafafa; }
+.msg { display: flex; margin: 8px 0; }
+.msg.user { justify-content: flex-end; }
+.msg.assistant { justify-content: flex-start; }
+.bubble { max-width: 70%; padding: 8px 12px; border-radius: 12px; }
+.msg.user .bubble { background: #007aff; color: white; border-bottom-right-radius: 4px; }
+.msg.assistant .bubble { background: white; border: 1px solid #e0e0e0; border-bottom-left-radius: 4px; }
+.composer { display: flex; gap: 8px; margin-top: 12px; }
+.composer input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; }
+.composer button { padding: 8px 16px; border: none; background: #28a745; color: white; border-radius: 6px; cursor: pointer; }
+.composer button[disabled] { opacity: .6; cursor: default; }
+
