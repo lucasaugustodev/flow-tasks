@@ -24,6 +24,7 @@ public class OpenRouterClient {
                                               String preferredModel) {
         // Lista de modelos para tentar em ordem de preferência
         String[] modelsToTry = {
+            "anthropic/claude-sonnet-4",
             "anthropic/claude-3.5-sonnet",
             "x-ai/grok-beta",
             "openai/gpt-4o",

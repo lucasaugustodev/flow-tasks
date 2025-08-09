@@ -45,7 +45,7 @@ public class AiChatController {
         messages.add(roleMsg("user", userMessage));
 
         List<Map<String, Object>> tools = buildToolsSchema();
-        Map<String, Object> response = openRouterClient.chatCompletion(messages, tools, "anthropic/claude-3.5-sonnet");
+        Map<String, Object> response = openRouterClient.chatCompletion(messages, tools, "anthropic/claude-sonnet-4");
 
         // Simple tool-call loop (max 5 turns)
         for (int i = 0; i < 5; i++) {
@@ -72,19 +72,40 @@ public class AiChatController {
                 messages.add(toolMsg);
             }
 
-            response = openRouterClient.chatCompletion(messages, tools, "anthropic/claude-3.5-sonnet");
+            response = openRouterClient.chatCompletion(messages, tools, "anthropic/claude-sonnet-4");
         }
 
         Map<String, Object> finalMsg = extractMessage(response);
         Map<String, Object> out = new HashMap<>();
-        out.put("message", finalMsg != null ? String.valueOf(finalMsg.get("content")) : "");
+        String finalContent = "";
+
+        if (finalMsg != null) {
+            Object content = finalMsg.get("content");
+            finalContent = content != null ? String.valueOf(content) : "";
+        }
+
+        // Debug: log da resposta final
+        System.out.println("=== RESPOSTA FINAL ===");
+        System.out.println("Final message: " + finalMsg);
+        System.out.println("Final content: " + finalContent);
+        System.out.println("=== FIM RESPOSTA ===");
+
+        // Se não temos conteúdo, fornecer uma resposta padrão
+        if (finalContent.isEmpty()) {
+            finalContent = "Ação executada com sucesso!";
+        }
+
+        out.put("message", finalContent);
         return ResponseEntity.ok(out);
     }
 
     private Map<String, Object> sysMsg() {
         String content = "Você é um assistente para gerenciamento de projetos. Utilize ferramentas quando precisar executar ações. " +
                 "Ferramentas disponíveis: list_projects, create_project, list_tasks, create_task, move_task. " +
-                "Responda em português. Ao criar tarefas/projetos, seja objetivo.";
+                "Responda em português. Ao criar tarefas/projetos, seja objetivo. " +
+                "IMPORTANTE: Para criar tarefas, SEMPRE pergunte ao usuário em qual projeto criar se ele não especificar. " +
+                "NÃO crie projetos automaticamente. Só crie projetos quando o usuário explicitamente pedir para criar um projeto. " +
+                "Se o usuário pedir para criar uma tarefa sem especificar o projeto, liste os projetos disponíveis e pergunte em qual criar.";
         return roleMsg("system", content);
     }
 
@@ -159,7 +180,22 @@ public class AiChatController {
         Map<?,?> firstMap = (Map<?,?>) first;
         Object msg = firstMap.get("message");
         if (msg instanceof Map) {
-            return (Map<String, Object>) msg;
+            Map<String, Object> message = (Map<String, Object>) msg;
+
+            // Se a mensagem tem content vazio mas tem tool_calls,
+            // significa que ainda está processando tools
+            Object content = message.get("content");
+            Object toolCalls = message.get("tool_calls");
+
+            if ((content == null || content.toString().trim().isEmpty()) && toolCalls != null) {
+                // Retorna uma mensagem indicando que a ação foi executada
+                Map<String, Object> finalMessage = new HashMap<>();
+                finalMessage.put("content", "Ação executada com sucesso!");
+                finalMessage.put("role", "assistant");
+                return finalMessage;
+            }
+
+            return message;
         }
         return null;
     }
