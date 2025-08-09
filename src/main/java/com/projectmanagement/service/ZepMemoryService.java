@@ -21,7 +21,7 @@ public class ZepMemoryService {
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
     
-    @Value("${zep.api.key:z_1dWlkIjoiNzRhN2JiNmMtNmQ0Ni00M2U4LTg0NDUtNGE1ODU3ZGM5NWUxIn0.-baBYGTUaFNPkBk7qo26FNYN9sPhf8iWWnWskhrmiUytR17fPBBtbJ1NYclIdqD_EGbYsUg232Z16ZkIUJngQw}")
+    @Value("${zep.api.key:}")
     private String zepApiKey;
 
     public ZepMemoryService() {

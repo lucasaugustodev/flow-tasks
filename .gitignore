@@ -367,3 +367,17 @@ logs/
 # Temporary files
 tmp/
 temp/
+
+# Environment variables and secrets
+.env
+.env.local
+.env.production
+.env.staging
+*.key
+*.pem
+*.p12
+*.jks
+
+# API Keys and sensitive data
+**/api-keys.txt
+**/secrets.txt
