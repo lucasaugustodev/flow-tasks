@@ -29,6 +29,9 @@ public class MCPClient {
     @Autowired
     private TaskController taskController;
 
+    @Autowired
+    private GitHubMCPService gitHubMCPService;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
@@ -102,6 +105,123 @@ public class MCPClient {
             Arrays.asList("taskId", "status")
         ));
 
+        // === FERRAMENTAS GITHUB ===
+
+        // github_list_repositories
+        tools.add(createToolSchema(
+            "github_list_repositories",
+            "Lista repositórios do usuário autenticado no GitHub",
+            Map.of(
+                "type", Map.of("type", "string", "description", "Tipo de repositório: owner, member, public (padrão: owner)"),
+                "sort", Map.of("type", "string", "description", "Ordenação: created, updated, pushed, full_name (padrão: updated)"),
+                "direction", Map.of("type", "string", "description", "Direção: asc, desc (padrão: desc)"),
+                "per_page", Map.of("type", "integer", "description", "Itens por página (padrão: 30)"),
+                "page", Map.of("type", "integer", "description", "Número da página (padrão: 1)")
+            ),
+            Arrays.asList()
+        ));
+
+        // github_get_repository
+        tools.add(createToolSchema(
+            "github_get_repository",
+            "Obtém detalhes de um repositório específico",
+            Map.of(
+                "owner", Map.of("type", "string", "description", "Proprietário do repositório"),
+                "repo", Map.of("type", "string", "description", "Nome do repositório")
+            ),
+            Arrays.asList("owner", "repo")
+        ));
+
+        // github_list_issues
+        tools.add(createToolSchema(
+            "github_list_issues",
+            "Lista issues de um repositório",
+            Map.of(
+                "owner", Map.of("type", "string", "description", "Proprietário do repositório"),
+                "repo", Map.of("type", "string", "description", "Nome do repositório"),
+                "state", Map.of("type", "string", "description", "Estado: open, closed, all (padrão: open)"),
+                "sort", Map.of("type", "string", "description", "Ordenação: created, updated, comments (padrão: created)"),
+                "direction", Map.of("type", "string", "description", "Direção: asc, desc (padrão: desc)"),
+                "per_page", Map.of("type", "integer", "description", "Itens por página (padrão: 30)"),
+                "page", Map.of("type", "integer", "description", "Número da página (padrão: 1)")
+            ),
+            Arrays.asList("owner", "repo")
+        ));
+
+        // github_create_issue
+        tools.add(createToolSchema(
+            "github_create_issue",
+            "Cria uma nova issue em um repositório",
+            Map.of(
+                "owner", Map.of("type", "string", "description", "Proprietário do repositório"),
+                "repo", Map.of("type", "string", "description", "Nome do repositório"),
+                "title", Map.of("type", "string", "description", "Título da issue"),
+                "body", Map.of("type", "string", "description", "Descrição da issue (opcional)"),
+                "labels", Map.of("type", "array", "description", "Labels para a issue (opcional)"),
+                "assignees", Map.of("type", "array", "description", "Usuários para atribuir (opcional)")
+            ),
+            Arrays.asList("owner", "repo", "title")
+        ));
+
+        // github_list_pull_requests
+        tools.add(createToolSchema(
+            "github_list_pull_requests",
+            "Lista pull requests de um repositório",
+            Map.of(
+                "owner", Map.of("type", "string", "description", "Proprietário do repositório"),
+                "repo", Map.of("type", "string", "description", "Nome do repositório"),
+                "state", Map.of("type", "string", "description", "Estado: open, closed, all (padrão: open)"),
+                "sort", Map.of("type", "string", "description", "Ordenação: created, updated, popularity (padrão: created)"),
+                "direction", Map.of("type", "string", "description", "Direção: asc, desc (padrão: desc)"),
+                "per_page", Map.of("type", "integer", "description", "Itens por página (padrão: 30)"),
+                "page", Map.of("type", "integer", "description", "Número da página (padrão: 1)")
+            ),
+            Arrays.asList("owner", "repo")
+        ));
+
+        // github_get_file_content
+        tools.add(createToolSchema(
+            "github_get_file_content",
+            "Obtém conteúdo de um arquivo do repositório",
+            Map.of(
+                "owner", Map.of("type", "string", "description", "Proprietário do repositório"),
+                "repo", Map.of("type", "string", "description", "Nome do repositório"),
+                "path", Map.of("type", "string", "description", "Caminho do arquivo"),
+                "ref", Map.of("type", "string", "description", "Branch, tag ou commit SHA (opcional)")
+            ),
+            Arrays.asList("owner", "repo", "path")
+        ));
+
+        // github_list_commits
+        tools.add(createToolSchema(
+            "github_list_commits",
+            "Lista commits de um repositório",
+            Map.of(
+                "owner", Map.of("type", "string", "description", "Proprietário do repositório"),
+                "repo", Map.of("type", "string", "description", "Nome do repositório"),
+                "sha", Map.of("type", "string", "description", "Branch, tag ou commit SHA (opcional)"),
+                "path", Map.of("type", "string", "description", "Filtrar por caminho (opcional)"),
+                "author", Map.of("type", "string", "description", "Filtrar por autor (opcional)"),
+                "per_page", Map.of("type", "integer", "description", "Itens por página (padrão: 30)"),
+                "page", Map.of("type", "integer", "description", "Número da página (padrão: 1)")
+            ),
+            Arrays.asList("owner", "repo")
+        ));
+
+        // github_search_repositories
+        tools.add(createToolSchema(
+            "github_search_repositories",
+            "Busca repositórios no GitHub",
+            Map.of(
+                "query", Map.of("type", "string", "description", "Consulta de busca (ex: 'machine learning language:python')"),
+                "sort", Map.of("type", "string", "description", "Ordenação: stars, forks, updated (padrão: stars)"),
+                "order", Map.of("type", "string", "description", "Direção: asc, desc (padrão: desc)"),
+                "per_page", Map.of("type", "integer", "description", "Itens por página (padrão: 30)"),
+                "page", Map.of("type", "integer", "description", "Número da página (padrão: 1)")
+            ),
+            Arrays.asList("query")
+        ));
+
         return tools;
     }
 
@@ -141,6 +261,25 @@ public class MCPClient {
                     return executeUpdateTask(arguments, user);
                 case "move_task":
                     return executeMoveTask(arguments, user);
+
+                // === FERRAMENTAS GITHUB ===
+                case "github_list_repositories":
+                    return executeGitHubListRepositories(arguments, user);
+                case "github_get_repository":
+                    return executeGitHubGetRepository(arguments, user);
+                case "github_list_issues":
+                    return executeGitHubListIssues(arguments, user);
+                case "github_create_issue":
+                    return executeGitHubCreateIssue(arguments, user);
+                case "github_list_pull_requests":
+                    return executeGitHubListPullRequests(arguments, user);
+                case "github_get_file_content":
+                    return executeGitHubGetFileContent(arguments, user);
+                case "github_list_commits":
+                    return executeGitHubListCommits(arguments, user);
+                case "github_search_repositories":
+                    return executeGitHubSearchRepositories(arguments, user);
+
                 default:
                     return createErrorResponse("Ferramenta não encontrada: " + toolName);
             }
@@ -407,5 +546,196 @@ public class MCPClient {
             null,
             userPrincipal.getAuthorities()
         );
+    }
+
+    // === MÉTODOS GITHUB MCP ===
+
+    private Map<String, Object> executeGitHubListRepositories(Map<String, Object> args, UserPrincipal user) {
+        try {
+            Map<String, Object> result = gitHubMCPService.listRepositories(args);
+
+            if ((Boolean) result.get("success")) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> repos = (List<Map<String, Object>>) result.get("repositories");
+
+                return Map.of(
+                    "success", true,
+                    "repositories", repos,
+                    "count", repos.size(),
+                    "message", "Repositórios listados com sucesso"
+                );
+            } else {
+                return createErrorResponse("Erro ao listar repositórios: " + result.get("error"));
+            }
+        } catch (Exception e) {
+            return createErrorResponse("Erro ao executar github_list_repositories: " + e.getMessage());
+        }
+    }
+
+    private Map<String, Object> executeGitHubGetRepository(Map<String, Object> args, UserPrincipal user) {
+        try {
+            String owner = (String) args.get("owner");
+            String repo = (String) args.get("repo");
+
+            Map<String, Object> result = gitHubMCPService.getRepository(owner, repo);
+
+            if ((Boolean) result.get("success")) {
+                return Map.of(
+                    "success", true,
+                    "repository", result.get("repository"),
+                    "message", "Repositório obtido com sucesso"
+                );
+            } else {
+                return createErrorResponse("Erro ao obter repositório: " + result.get("error"));
+            }
+        } catch (Exception e) {
+            return createErrorResponse("Erro ao executar github_get_repository: " + e.getMessage());
+        }
+    }
+
+    private Map<String, Object> executeGitHubListIssues(Map<String, Object> args, UserPrincipal user) {
+        try {
+            String owner = (String) args.get("owner");
+            String repo = (String) args.get("repo");
+
+            Map<String, Object> result = gitHubMCPService.listIssues(owner, repo, args);
+
+            if ((Boolean) result.get("success")) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> issues = (List<Map<String, Object>>) result.get("issues");
+
+                return Map.of(
+                    "success", true,
+                    "issues", issues,
+                    "count", issues.size(),
+                    "message", "Issues listadas com sucesso"
+                );
+            } else {
+                return createErrorResponse("Erro ao listar issues: " + result.get("error"));
+            }
+        } catch (Exception e) {
+            return createErrorResponse("Erro ao executar github_list_issues: " + e.getMessage());
+        }
+    }
+
+    private Map<String, Object> executeGitHubCreateIssue(Map<String, Object> args, UserPrincipal user) {
+        try {
+            String owner = (String) args.get("owner");
+            String repo = (String) args.get("repo");
+
+            Map<String, Object> issueData = new HashMap<>();
+            issueData.put("title", args.get("title"));
+            if (args.containsKey("body")) issueData.put("body", args.get("body"));
+            if (args.containsKey("labels")) issueData.put("labels", args.get("labels"));
+            if (args.containsKey("assignees")) issueData.put("assignees", args.get("assignees"));
+
+            Map<String, Object> result = gitHubMCPService.createIssue(owner, repo, issueData);
+
+            if ((Boolean) result.get("success")) {
+                return Map.of(
+                    "success", true,
+                    "issue", result.get("issue"),
+                    "issueNumber", result.get("issueNumber"),
+                    "message", "Issue criada com sucesso"
+                );
+            } else {
+                return createErrorResponse("Erro ao criar issue: " + result.get("error"));
+            }
+        } catch (Exception e) {
+            return createErrorResponse("Erro ao executar github_create_issue: " + e.getMessage());
+        }
+    }
+
+    private Map<String, Object> executeGitHubListPullRequests(Map<String, Object> args, UserPrincipal user) {
+        try {
+            String owner = (String) args.get("owner");
+            String repo = (String) args.get("repo");
+
+            Map<String, Object> result = gitHubMCPService.listPullRequests(owner, repo, args);
+
+            if ((Boolean) result.get("success")) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> pullRequests = (List<Map<String, Object>>) result.get("pullRequests");
+
+                return Map.of(
+                    "success", true,
+                    "pullRequests", pullRequests,
+                    "count", pullRequests.size(),
+                    "message", "Pull requests listados com sucesso"
+                );
+            } else {
+                return createErrorResponse("Erro ao listar pull requests: " + result.get("error"));
+            }
+        } catch (Exception e) {
+            return createErrorResponse("Erro ao executar github_list_pull_requests: " + e.getMessage());
+        }
+    }
+
+    private Map<String, Object> executeGitHubGetFileContent(Map<String, Object> args, UserPrincipal user) {
+        try {
+            String owner = (String) args.get("owner");
+            String repo = (String) args.get("repo");
+            String path = (String) args.get("path");
+            String ref = (String) args.get("ref");
+
+            Map<String, Object> result = gitHubMCPService.getFileContent(owner, repo, path, ref);
+
+            if ((Boolean) result.get("success")) {
+                return Map.of(
+                    "success", true,
+                    "file", result.get("file"),
+                    "message", "Conteúdo do arquivo obtido com sucesso"
+                );
+            } else {
+                return createErrorResponse("Erro ao obter conteúdo do arquivo: " + result.get("error"));
+            }
+        } catch (Exception e) {
+            return createErrorResponse("Erro ao executar github_get_file_content: " + e.getMessage());
+        }
+    }
+
+    private Map<String, Object> executeGitHubListCommits(Map<String, Object> args, UserPrincipal user) {
+        try {
+            String owner = (String) args.get("owner");
+            String repo = (String) args.get("repo");
+
+            Map<String, Object> result = gitHubMCPService.listCommits(owner, repo, args);
+
+            if ((Boolean) result.get("success")) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> commits = (List<Map<String, Object>>) result.get("commits");
+
+                return Map.of(
+                    "success", true,
+                    "commits", commits,
+                    "count", commits.size(),
+                    "message", "Commits listados com sucesso"
+                );
+            } else {
+                return createErrorResponse("Erro ao listar commits: " + result.get("error"));
+            }
+        } catch (Exception e) {
+            return createErrorResponse("Erro ao executar github_list_commits: " + e.getMessage());
+        }
+    }
+
+    private Map<String, Object> executeGitHubSearchRepositories(Map<String, Object> args, UserPrincipal user) {
+        try {
+            String query = (String) args.get("query");
+
+            Map<String, Object> result = gitHubMCPService.searchRepositories(query, args);
+
+            if ((Boolean) result.get("success")) {
+                return Map.of(
+                    "success", true,
+                    "searchResult", result.get("searchResult"),
+                    "message", "Busca de repositórios realizada com sucesso"
+                );
+            } else {
+                return createErrorResponse("Erro ao buscar repositórios: " + result.get("error"));
+            }
+        } catch (Exception e) {
+            return createErrorResponse("Erro ao executar github_search_repositories: " + e.getMessage());
+        }
     }
 }

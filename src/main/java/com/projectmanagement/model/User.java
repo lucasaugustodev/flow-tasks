@@ -44,6 +44,16 @@ public class User {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
+    // Campos para integração GitHub
+    @Column(name = "github_token")
+    private String githubToken;
+
+    @Column(name = "github_avatar_url")
+    private String githubAvatarUrl;
+
+    @Column(name = "github_login")
+    private String githubLogin;
+
     @JsonIgnore
     @ManyToMany(mappedBy = "users")
     private Set<Project> projects = new HashSet<>();
@@ -107,6 +117,16 @@ public class User {
 
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }
+
+    // Getters e Setters para campos GitHub
+    public String getGithubToken() { return githubToken; }
+    public void setGithubToken(String githubToken) { this.githubToken = githubToken; }
+
+    public String getGithubAvatarUrl() { return githubAvatarUrl; }
+    public void setGithubAvatarUrl(String githubAvatarUrl) { this.githubAvatarUrl = githubAvatarUrl; }
+
+    public String getGithubLogin() { return githubLogin; }
+    public void setGithubLogin(String githubLogin) { this.githubLogin = githubLogin; }
 
     public Set<Project> getProjects() { return projects; }
     public void setProjects(Set<Project> projects) { this.projects = projects; }
